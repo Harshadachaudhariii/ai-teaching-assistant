@@ -1,0 +1,5 @@
+Okay, let's find out where the introduction to CSS is taught in this course!
+
+The introduction to CSS is covered in the video titled “Heading, Paragraphs and Links”. It starts at approximately 597.8 seconds and continues until 599.6 seconds. 
+
+You can access this video by clicking on the link: [https://www.youtube.com/watch?v=H-K8fJ13vR8](https://www.youtube.com/watch?v=H-K8fJ13vR8)
