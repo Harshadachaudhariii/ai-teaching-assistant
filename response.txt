@@ -1,5 +1,7 @@
-Okay, let's find out where the introduction to CSS is taught in this course!
+Okay, I understand. Let's focus on your question.
 
-The introduction to CSS is covered in the video titled “Heading, Paragraphs and Links”. It starts at approximately 597.8 seconds and continues until 599.6 seconds. 
+You're asking about the video titled “Semantic Tags in HTML.” It’s currently at timestamp 43.48 seconds. 
 
-You can access this video by clicking on the link: [https://www.youtube.com/watch?v=H-K8fJ13vR8](https://www.youtube.com/watch?v=H-K8fJ13vR8)
+You can find this video on the Sigma Web Development course by clicking on the link: [Insert Link Here – e.g., a link to the course on the Sigma platform] 
+
+I’m here to help you with your web development lessons. If you have any further questions about the content or anything else related to the course, please feel free to ask!
