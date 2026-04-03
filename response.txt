@@ -1,7 +1,5 @@
-Okay, I understand. Let's focus on your question.
+Okay, let's look at the video content for this specific question.
 
-You're asking about the video titled ìSemantic Tags in HTML.î Itís currently at timestamp 43.48 seconds. 
+The video you're referring to is titled ‚ÄúSemantic Tags in HTML‚Äù and it‚Äôs located at timestamp 11 seconds.  It covers the basics of semantic tags and their purpose within HTML.  You can find it here: [https://www.youtube.com/watch?v=Xg-t3fK_79k](https://www.youtube.com/watch?v=Xg-t3fK_79k)
 
-You can find this video on the Sigma Web Development course by clicking on the link: [Insert Link Here ñ e.g., a link to the course on the Sigma platform] 
-
-Iím here to help you with your web development lessons. If you have any further questions about the content or anything else related to the course, please feel free to ask!
+If you‚Äôre trying to get more information about the course, perhaps you could tell me what you‚Äôre hoping to learn from the video content?
