@@ -1,5 +1,9 @@
 import streamlit as st
+import uuid
 
+# store reset tokens
+if "reset_tokens" not in st.session_state:
+    st.session_state.reset_tokens = {}
 # 1. Navigation Logic
 if "page" not in st.session_state:
     st.session_state.page = "login"
@@ -193,6 +197,7 @@ with col:
                         "password": password
                     }
                     st.success("Account created successfully!")
+                    st.info("Please log in with your new credentials.")
                 
 
         # Better login link
