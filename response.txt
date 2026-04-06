@@ -1,5 +1,5 @@
-Okay, let's look at the video content for this specific question.
+Okay, let’s find the video where CSS is introduced.
 
-The video you're referring to is titled “Semantic Tags in HTML” and it’s located at timestamp 11 seconds.  It covers the basics of semantic tags and their purpose within HTML.  You can find it here: [https://www.youtube.com/watch?v=Xg-t3fK_79k](https://www.youtube.com/watch?v=Xg-t3fK_79k)
+The CSS introduction is taught in video number 1, starting at approximately 1511.24 seconds. You can access this video by clicking on the link: [https://www.youtube.com/watch?v=u38iW-vV-8M](https://www.youtube.com/watch?v=u38iW-vV-8M)
 
-If you’re trying to get more information about the course, perhaps you could tell me what you’re hoping to learn from the video content?
+Let me know if you want me to help you navigate through the other video chunks as well!
