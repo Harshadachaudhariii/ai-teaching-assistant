@@ -37,7 +37,7 @@ div.stButton > button {
     border-radius: 8px;
     font-size: 14px;
     transition: all 0.3s ease;
-    padding: 10px 15px;
+    padding: 10px 10px;
 }
 
 /* Professional Hover Effect */
@@ -50,8 +50,8 @@ div.stButton > button:hover {
 /* Popover Position & Style */
 .stPopover {
     float: right;
-    margin-top: 65px;
-    margin-right: 1px;
+    margin-top: -30px;
+    margin-left: 1040px;
 }
 .stPopover > div:first-child > button {
     border-radius: 50% !important;
@@ -148,6 +148,9 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     st.markdown('<div class="separator"></div>', unsafe_allow_html=True)
+    if st.button("Back", use_container_width=True):
+        st.session_state.view = "Landing"
+        st.rerun()
     st.markdown('<div class="sidebar-title">ACCOUNT</div>', unsafe_allow_html=True)
 
     if st.button("👤 Profile"): st.session_state.view = "Profile"

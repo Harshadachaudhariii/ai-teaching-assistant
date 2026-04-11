@@ -2,9 +2,6 @@ import streamlit as st
 
 # --- 1. STYLES SECTION ---
 def inject_custom_css():
-    """
-    Injects the CSS logic exactly as provided.
-    """
     st.markdown("""
         <style>
         /* 1. Reset & Global Styles */
@@ -203,25 +200,34 @@ def inject_custom_css():
             justify-content: center;
         }
 
-        div.stButton > button[key="cta_btn"] {
-            background-color: #007bff !important;
+        /* 1. Target the button specifically and center it */
+        .stApp div.stButton > button:has(p:contains("Get Started for Free")) {
+            background-color: #3B82F6 !important;
             color: white !important;
-            border: 2px solid #007bff !important;
+            border: 2px solid #3B82F6 !important;
             border-radius: 50px !important;
-            padding: 10px 40px !important;
+            padding: 120px 60px !important;
             font-size: 18px !important;
             font-weight: 700 !important;
+            
+            /* Positioning logic to overlap the border */
+            margin-top: -45px !important; 
+            z-index: 999 !important;
+            position: relative !important;
+            
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
             transition: all 0.3s ease-in-out !important;
-            margin-top: -50px !important; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
         }
 
-        div.stButton > button[key="cta_btn"]:hover {
+        /* 2. Hover state using the SAME selector */
+        .stApp div.stButton > button:has(p:contains("Get Started for Free")):hover {
             background-color: white !important;
-            color: #007bff !important;
+            color: #3B82F6 !important;
             border: 2px solid white !important;
             transform: scale(1.05) !important;
+            box-shadow: 0 15px 30px rgba(59, 130, 246, 0.4) !important;
         }
+
 
         .scroll-container {
             overflow: hidden;
@@ -289,64 +295,152 @@ def inject_custom_css():
             overflow: visible !important;
             margin-bottom: 30px;
         }
+        /* 1. Target the deepest input level */
+        .stTextInput > div > div > input {
+            background-color: #1a1a1a !important;
+            color: white !important;
+            padding-left: 20px !important;
+            height: 50px;
+            transition: all 0.2s ease-in-out !important;
+        }
+
+        /* 2. COMPLETELY REMOVE STREAMLIT'S RED BORDER/GLOW */
+        /* This targets the wrapper divs that cause the red hover effect */
+        .stTextInput div[data-baseweb="input"] {
+            border: none !important;
+            background-color: transparent !important;
+        }
+
+        /* 3. Hover State - Forces Blue, Kills Red */
+        .stTextInput > div > div > input:hover {
+            border-color: #3B82F6 !important;
+            box-shadow: none !important;
+        }
+
+        /* 4. Focus State - Blue glow instead of red */
+        .stTextInput > div > div > input:focus {
+            border-color: #60a5fa !important;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.4) !important;
+            outline: none !important;
+        }
+
+        /* 5. Final safety: remove any red borders from focused parent containers */
+        .stTextInput > div > div:focus-within {
+            border-color: transparent !important;
+            box-shadow: none !important;
+        }
         </style>
+    
         """, unsafe_allow_html=True)
 
 # --- 2. NAVIGATION SECTION ---
+
 def render_navbar():
     nav_col1, nav_col2, nav_col3 = st.columns([2.5, 4.5, 3])
     with nav_col1:
         st.markdown('<div class="logo-container">⚡ LearnAI</div>', unsafe_allow_html=True)
     with nav_col2:
-        st.markdown("<div class='nav-links' style='margin-top: 15px; text-align: center;'><a href='#features'>Features</a><a href='#pricing'>Pricing</a><a href='#about'>About</a></div>", unsafe_allow_html=True)
+        # Keep your exact HTML logic
+        st.markdown("""
+            <div class='nav-links' style='margin-top: 15px; text-align: center;'>
+                <a href='#features_section'>Features</a>
+                <a href='#pricing_section'>Pricing</a>
+                <a href='#about_section'>About</a>
+            </div>
+        """, unsafe_allow_html=True)
     with nav_col3:
         st.write('<div style="margin-top: 8px;">', unsafe_allow_html=True)
         n_c1, n_c2 = st.columns(2)
         if n_c1.button("Login", key="nav_login"):
             st.session_state.focus_trigger = True 
         with n_c2: st.button("Get Started", key="nav_gs")
-
+        
 # --- 3. HERO SECTION ---
 def render_hero():
+    # Check current active tab from URL state, default to 'learn'
+    if "active_tab" not in st.query_params:
+        st.query_params["active_tab"] = "learn"
+    
+    active = st.query_params["active_tab"]
+
     st.write("") 
     hero_left, hero_right = st.columns([5, 5])
+    
+    # --- LEFT SIDE (Unchanged) ---
     with hero_left:
-        st.markdown('<p style="color: #3B82F6; font-weight: 600; margin-bottom: -10px;etter-spacing: 1px;">PROXIMITY LEARNING 2.0</p>', unsafe_allow_html=True)
+        st.markdown('<p style="color: #3B82F6; font-weight: 600; margin-bottom: -10px; letter-spacing: 1px;">PROXIMITY LEARNING 2.0</p>', unsafe_allow_html=True)
         st.markdown('<h1 class="hero-title">Think faster,<br>learn smarter</h1>', unsafe_allow_html=True)
-        st.markdown('<p class="hero-subtitle">The first AI Teaching Assistant built specifically for your curriculum. Transform static study materials into an interactive knowledge base.</p>', unsafe_allow_html=True)
+        st.markdown('<p class="hero-subtitle">The first AI Teaching Assistant built specifically for your courses. Transform static study materials into an interactive knowledge base.</p>', unsafe_allow_html=True)
+        left_gap, center_col, right_gap = st.columns([1, 8, 1])
         
-        st.text_input("Enter your email", placeholder="name@university.edu", label_visibility="collapsed", key="hero_email")
-        st.button("Continue", key="hero_cta")
+        with center_col:
+            # The CSS above will automatically color this border blue
+            st.text_input("Enter your email", 
+                         placeholder="name@university.edu", 
+                         label_visibility="collapsed", 
+                         key="hero_email")
+            
+            st.button("Continue with Email", key="hero_cta", use_container_width=True)
+            
+            st.markdown("<p style='text-align: center; color: #555; margin: 10px 0; font-size: 14px;'>— OR —</p>", unsafe_allow_html=True)
+            
+            st.button("Continue with Google", key="hero_google", use_container_width=True)
         st.markdown("<div style='display: flex; gap: 20px; color: #555; font-size: 13px; margin-top: 25px;'><span>✓ No Credit Card Required</span><span>✓ Student Focused</span><span>✓ Privacy First</span></div>", unsafe_allow_html=True)
 
+    # --- RIGHT SIDE (Internal Tab Logic) ---
     with hero_right:
-        st.markdown("""
-        <div class="ui-preview">
-            <div style="border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 25px; display: flex; gap: 25px;">
-                <span class="tab-active",>LearnAI</span>
-                <span class="tab-inactive">Study Buddy</span>
+        if active == "learn":
+            st.markdown(f"""
+            <div class="ui-preview">
+                <div style="border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 25px; display: flex; gap: 25px;">
+                    <a href="/?active_tab=learn" target="_self" style="text-decoration: none; color: #3B82F6; border-bottom: 2px solid #3B82F6; padding-bottom: 10px; font-weight: 600;">LearnAI</a>
+                    <a href="/?active_tab=study" target="_self" style="text-decoration: none; color: #666;">Study Buddy</a>
+                </div>
+                <div style="background: #1A1A1A; padding: 15px; border-radius: 10px; margin-bottom: 15px; width: 75%; font-size: 14px; border: 1px solid #222;">
+                    Explain neural networks simply.
+                </div>
+                <div style="background: #252525; padding: 15px; border-radius: 10px; margin-left: 20%; border-left: 3px solid #3B82F6; font-size: 14px;">
+                    Think of them like a digital brain...<br>
+                    <span style="color: #888; font-size: 13px; display: block; margin-top: 8px;">
+                    They process patterns through layers of connected nodes, much like how neurons fire in your own mind.
+                    </span>
+                </div>
+                <div style="margin-top: 40px; width: 100%; background: #111; border: 1px solid #333; padding: 12px; border-radius: 10px; color: #444; font-size: 13px;">
+                    Ask Logic Engine or Course Pilot...
+                </div>
             </div>
-            <div style="background: #1A1A1A; padding: 15px; border-radius: 10px; margin-bottom: 15px; width: 75%; font-size: 14px; border: 1px solid #222;">
-                Explain neural networks simply.
+            """, unsafe_allow_html=True)
+        
+        else:
+            st.markdown(f"""
+            <div class="ui-preview">
+                <div style="border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 25px; display: flex; gap: 25px;">
+                    <a href="/?active_tab=learn" target="_self" style="text-decoration: none; color: #666;">LearnAI</a>
+                    <a href="/?active_tab=study" target="_self" style="text-decoration: none; color: #3B82F6; border-bottom: 2px solid #3B82F6; padding-bottom: 10px; font-weight: 600;">Study Buddy</a>
+                </div>
+                <div style="background: #1A1A1A; padding: 15px; border-radius: 10px; margin-bottom: 15px; width: 75%; font-size: 14px; border: 1px solid #222;">
+                    Help me study CSS Box Model.
+                </div>
+                <div style="background: #252525; padding: 15px; border-radius: 10px; margin-left: 20%; border-left: 3px solid #3B82F6; font-size: 14px;">
+                    The Box Model consists of: Margin, Border, Padding, and Content.<br>
+                    <span style="color: #888; font-size: 13px; display: block; margin-top: 8px;">
+                    Would you like to start a quick quiz on these concepts?
+                    </span>
+                </div>
+                <div style="margin-top: 40px; width: 100%; background: #111; border: 1px solid #333; padding: 12px; border-radius: 10px; color: #444; font-size: 13px;">
+                    Ask about specific CSS properties...
+                </div>
             </div>
-            <div style="background: #252525; padding: 15px; border-radius: 10px; margin-left: 20%; border-left: 3px solid #3B82F6; font-size: 14px;">
-                Think of them like a digital brain...<br>
-                <span style="color: #888; font-size: 13px; display: block; margin-top: 8px;">
-                They process patterns through layers of connected nodes, much like how neurons fire in your own mind.
-                </span>
-            </div>
-            <div style="margin-top: 40px; width: 100%; background: #111; border: 1px solid #333; padding: 12px; border-radius: 10px; color: #444; font-size: 13px;">
-                Ask Logic Engine or Course Pilot...
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
 # --- 4. FEATURES SECTION ---
 def render_features():
     st.write(""); st.write(""); st.write("")
-    st.markdown("<h2 style='text-align: center; font-size: 40px;' id='features'>Engineered for Students</h2>", unsafe_allow_html=True)
+    st.markdown('<span id="features_section"></span>', unsafe_allow_html=True)
+    # id="features" allows the navbar link to jump here
+    st.markdown("<h2 style='text-align: center; font-size: 40px;'>Engineered for Students</h2>", unsafe_allow_html=True)
     st.write("")
-
+    
     features = [
         {"icon": "💬", "title": "ChatStream AI", "desc": "Ask anything to the General AI. Powered by Ollama for instant local responses."},
         {"icon": "🎓", "title": "Teaching Assistant", "desc": "Answers strictly from your uploaded course data using advanced RAG systems."},
@@ -372,11 +466,13 @@ def render_features():
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-
+                    
 # --- 5. PRICING SECTION ---
 def render_pricing():
     st.write(""); st.write(""); st.write("")
-    st.markdown("<h2 style='text-align: center; font-size: 40px;' id='pricing'>Explore Plans</h2>", unsafe_allow_html=True)
+    st.markdown('<span id="pricing_section"></span>', unsafe_allow_html=True)
+    # id="pricing" allows the navbar link to jump here
+    st.markdown("<h2 style='text-align: center; font-size: 40px;'>Engineered for Students</h2>", unsafe_allow_html=True)
     st.write("")
 
     plans = [
@@ -436,6 +532,8 @@ def render_cta_and_scroller():
 # --- 7. FOOTER SECTION ---
 def render_footer():
     st.write(""); st.write(""); st.write(""); st.write("")
+    # id="about" target for the navbar
+    st.markdown('<span id="about_section"></span>', unsafe_allow_html=True)
     st.divider()
     foot_col1, foot_col2, foot_col3, foot_col4 = st.columns(4)
     with foot_col1:

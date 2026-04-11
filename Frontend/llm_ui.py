@@ -10,31 +10,45 @@ def inject_ui_styles():
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@300;400;600&display=swap');
 
-        .stApp {{ background-color: #0a0a0a; color: #f3f4f6; font-family: 'Inter', sans-serif; }}
+        .stApp {{ background-color: #0a0a0a; color: #f3f4f6; font-family: 'Inter', sans-serif; line-height: 1.6; }}
         
+        /* Typography & Visual Hierarchy */
         .hero-title {{
             text-align: center; font-family: 'Lexend Deca', sans-serif;
             font-size: 4rem; font-weight: 600; letter-spacing: -4px; 
             background: linear-gradient(to bottom, #ffffff 30%, #6b7280 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 0px;
         }}
         .hero-subtitle {{
             text-align: center; color: #9ca3af; font-size: 1.1rem; 
             font-weight: 300; margin-bottom: 40px;
         }}
 
+        /* Professional Card Styling for Main View */
+        .glass-card {{
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 20px;
+        }}
+
         [data-testid="stSidebar"] {{ background-color: #0d0d0d; border-right: 1px solid #1e1e1e; }}
 
+        /* Button Interaction Feedback */
         div.stButton > button {{
             background-color: rgba(255, 255, 255, 0.02) !important;
             color: #9ca3af !important;
             border: 1px solid #262626 !important;
             border-radius: 10px; width: 100%; text-align: left;
+            transition: all 0.2s ease;
         }}
         div.stButton > button:hover {{
             border-color: #3b82f6 !important;
             color: #3b82f6 !important;
             background-color: rgba(59, 130, 246, 0.08) !important;
+            transform: translateY(-1px);
         }}
 
         div[data-testid="stRadio"] > label {{
@@ -48,16 +62,13 @@ def inject_ui_styles():
             padding: 12px 18px;
             border-radius: 20px 20px 4px 20px; 
             margin: 10px 0 10px auto;
-            max-width: 80%; 
-            width: fit-content; 
-            display: block;    
-            font-size: 0.95rem; 
-            color: #ffffff;
+            max-width: 80%; width: fit-content; display: block; font-size: 0.95rem; color: #ffffff;
         }}
 
         [data-testid="stChatMessage"] {{
             width: fit-content !important;
             max-width: 85% !important;
+            border-radius: 12px;
         }}
         </style>
     """, unsafe_allow_html=True)
@@ -110,7 +121,7 @@ def render_sidebar():
                 is_active = cid == st.session_state.active_id
                 cols = st.columns([0.85, 0.15])
                 with cols[0]:
-                    label = f"📖 {data['title'][:18]}" if data.get('mode') == "Study Buddy" else f"🧠 {data['title'][:18]}"
+                    label = f"📖 {data['title'][:18]}" if data.get('mode') == "Study Buddy" else f"{data['title'][:18]}"
                     if st.button(label, key=f"n_{cid}", type="primary" if is_active else "secondary"):
                         st.session_state.active_id = cid
                         st.rerun()
@@ -150,22 +161,68 @@ def render_message(role, text):
             st.markdown(text)
 
 def render_hero_screen():
-    st.markdown("<br><br><br><br>", unsafe_allow_html=True)
-    _, mid, _ = st.columns([0.2, 0.6, 0.2])
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    _, mid, _ = st.columns([0.15, 0.7, 0.15])
     with mid:
+        # Hierarchy: Large Title -> Subtle Subtitle
         st.markdown(f'<h1 class="hero-title">{st.session_state.ai_mode}</h1>', unsafe_allow_html=True)
-        desc = "Your study buddy for exam prep and deep learning." if st.session_state.ai_mode == "Study Buddy" else "The architectural standard for professional intelligence."
+        desc = "Your personalized learning partner for exam prep and research." if st.session_state.ai_mode == "Study Buddy" else "The industrial standard for deep logic and professional intelligence."
         st.markdown(f'<p class="hero-subtitle">{desc}</p>', unsafe_allow_html=True)
         
-        if st.button(f"＋ Start with New {st.session_state.ai_mode} Chat", use_container_width=True):
+        # Primary Action
+        if st.button(f"🚀 Start New {st.session_state.ai_mode} Session", use_container_width=True, type="primary"):
             create_thread()
             st.rerun()
 
+        # 1. & 2. GUIDED INTERACTION (Fill empty space)
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.markdown("<p style='font-size:0.8rem; color:#6b7280; font-weight:600; text-transform:uppercase; margin-bottom:15px;'>Suggested Prompts</p>", unsafe_allow_html=True)
+        
+        c1, c2 = st.columns(2)
+        prompts = [
+            ["💡 Explain Quantum Computing", "📖 Summarize this chapter"],
+            ["🧪 Debug my Python logic", "📝 Generate a mock quiz"]
+        ]
+        
+        idx = 0 if st.session_state.ai_mode == "LearnAI" else 1
+        with c1:
+            if st.button(prompts[idx][0]):
+                create_thread()
+                st.session_state.chats[st.session_state.active_id]["messages"].append({"role": "user", "content": prompts[idx][0]})
+                st.rerun()
+        with c2:
+            if st.button(prompts[idx][1]):
+                create_thread()
+                st.session_state.chats[st.session_state.active_id]["messages"].append({"role": "user", "content": prompts[idx][1]})
+                st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # 2. Preview interaction block
+        with st.expander("🔍 See a preview of the response style"):
+            st.markdown("""
+            **User:** *How do I optimize a SQL query?* **Nexus AI:** To optimize a SQL query, start by analyzing the Execution Plan. 
+            Ensure your columns are indexed, avoid `SELECT *`, and use `JOIN` instead of subqueries where possible.
+            """)
+
 def render_chat_interface():
-    # Header
-    st.markdown(f"### {st.session_state.ai_mode} <small style='color:#6b7280; font-size:0.8rem;'>Active Session</small>", unsafe_allow_html=True)
+    # 3. Improved Header Section
+    st.markdown(f"""
+        <div style='display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e1e1e; padding-bottom: 10px; margin-bottom: 20px;'>
+            <h3 style='margin:0;'>{st.session_state.ai_mode}</h3>
+            <span style='background: #111; color: #3b82f6; font-size: 0.75rem; padding: 4px 12px; border-radius: 20px; border: 1px solid #3b82f6;'>Online</span>
+        </div>
+    """, unsafe_allow_html=True)
     
     chat = st.session_state.chats[st.session_state.active_id]
+    
+    # 3. Chat Empty State
+    if not chat['messages']:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.info(f"**Welcome to your new {st.session_state.ai_mode} session.** Type your first message below or choose a starter.")
+        if st.button("✨ What are we working on today?"):
+             chat['messages'].append({"role": "user", "content": "What can you help me with in this mode?"})
+             st.rerun()
+
     for msg in chat['messages']:
         render_message(msg['role'], msg['content'])
 
@@ -192,10 +249,6 @@ def render_chat_interface():
 
 # --- 4. THE MASTER WRAPPER FUNCTION ---
 def render_nexus_app():
-    """
-    Master function that calls all sub-functions to build the UI.
-    This makes the backend ready by separating UI logic from data flow.
-    """
     inject_ui_styles()
     init_store()
     render_sidebar()
