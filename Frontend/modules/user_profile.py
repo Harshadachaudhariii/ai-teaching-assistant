@@ -1,113 +1,157 @@
 import streamlit as st
 import datetime
 import re
-import pyotp
 import qrcode
-from PIL import Image
 import io
 import random
-
-st.set_page_config(layout="wide", page_title="Streamlit SaaS UI", initial_sidebar_state="expanded")
-
+import json
 # =========================
 # PROFESSIONAL CSS (Updated)
 # =========================
-st.markdown("""
-<style>
-#MainMenu, footer {visibility: hidden;}
+def inject_profile_styles():
+    st.markdown("""
+    <style>
+    #MainMenu, footer {visibility: hidden;}
 
-html, body {
-    background-color: #0a0a0a !important;
+    html, body {
+        background-color: #0a0a0a !important;
+        overflow-x: hidden !important;
+    }
+    .stApp {
+    overflow-x: hidden !important;
 }
+    .block-container {
+    max-width: 100vw;
+    overflow-x: hidden !important;
+}
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: #0e0e0e !important;
+        border-right: 1px solid #1e293b;
+        display: flex !important; /* Force sidebar to show when in profile */
+    }
 
-/* Sidebar Styling */
-[data-testid="stSidebar"] {
-    background-color: #0e0e0e !important;
-    border-right: 1px solid #1e293b;
-}
+    /* UNIVERSAL BUTTON THEME: Transparent, Blue Hover */
+    div.stButton > button {
+        width: 100%;
+        text-align: left;
+        background-color: transparent !important;
+        color: #ded1d1 !important;
+        border: 1px solid transparent !important; 
+        box-shadow: none !important;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        padding: 10px 10px;
+        margin-top: 5px;
+    }
 
-/* UNIVERSAL BUTTON THEME: Transparent, Blue Hover */
-div.stButton > button {
-    width: 100%;
-    text-align: left;
-    background-color: transparent !important;
-    color: #ded1d1 !important;
-    border: 1px solid transparent !important; /* Normal state transparent border */
-    box-shadow: none !important;
-    border-radius: 8px;
-    font-size: 14px;
-    transition: all 0.3s ease;
-    padding: 10px 10px;
-}
+    /* Professional Hover Effect */
+    div.stButton > button:hover {
+        color: #2563eb !important;
+        border: 1px solid #2563eb !important;
+        background-color: transparent !important;
+    }
 
-/* Professional Hover Effect */
-div.stButton > button:hover {
-    color: #2563eb !important;
-    border: 1px solid #2563eb !important;
-    background-color: transparent !important;
-}
+    /* Popover Position & Style */
+    .stPopover {
+        float: right;
+        margin-top: -30px;
+        margin-left: 1040px;
+    }
+    .stPopover > div:first-child > button {
+        border-radius: 50% !important;
+        width: 40px !important;
+        height: 40px !important;
+        background-color: #111111 !important;
+        border: 1px solid #222 !important;
+    }
 
-/* Popover Position & Style */
-.stPopover {
-    float: right;
-    margin-top: -30px;
-    margin-left: 1040px;
-}
-.stPopover > div:first-child > button {
-    border-radius: 50% !important;
-    width: 40px !important;
-    height: 40px !important;
-    background-color: #111111 !important;
-    border: 1px solid #222 !important;
-}
+    /* Sidebar Titles */
+    .sidebar-title {
+        font-size: 11px;
+        letter-spacing: 1px;
+        color: #555;
+        margin-top: 15px;
+        margin-bottom: 5px;
+        padding-left: 10px;
+        font-weight: bold;
+    }
 
-/* Sidebar Titles */
-.sidebar-title {
-    font-size: 11px;
-    letter-spacing: 1px;
-    color: #555;
-    margin-top: 15px;
-    margin-bottom: 5px;
-    padding-left: 10px;
-    font-weight: bold;
-}
+    .separator {
+        border-bottom: 1px solid #222;
+        margin: 20px 0;
+    }
 
-.separator {
-    border-bottom: 1px solid #222;
-    margin: 20px 0;
-}
+    .logout-container {
+        position: absolute;
+        bottom: 20px;
+        width: 100%;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-.logout-container {
-    position: absolute;
-    bottom: 20px;
-    width: 100%;
-}
-</style>
-""", unsafe_allow_html=True)
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+
+def generate_pdf(data):
+    buffer = io.BytesIO()
+
+    doc = SimpleDocTemplate(buffer)
+    styles = getSampleStyleSheet()
+
+    content = []
+
+    # Title
+    content.append(Paragraph("User Data Export", styles["Title"]))
+    content.append(Spacer(1, 10))
+
+    # User Info
+    content.append(Paragraph(f"Name: {data['user_info']['name']}", styles["Normal"]))
+    content.append(Paragraph(f"Degree: {data['user_info']['degree']}", styles["Normal"]))
+    content.append(Paragraph(f"Batch: {data['user_info']['batch']}", styles["Normal"]))
+    content.append(Spacer(1, 10))
+
+    # Security
+    content.append(Paragraph("Security Settings", styles["Heading2"]))
+    content.append(Paragraph(f"2FA Enabled: {data['security_settings']['two_factor_enabled']}", styles["Normal"]))
+    content.append(Paragraph(f"Visibility: {data['security_settings']['profile_visibility']}", styles["Normal"]))
+    content.append(Spacer(1, 10))
+
+    # Projects
+    content.append(Paragraph("Projects", styles["Heading2"]))
+    for proj in data["projects"]:
+        content.append(Paragraph(f"- {proj}", styles["Normal"]))
+
+    doc.build(content)
+    buffer.seek(0)
+
+    return buffer
 
 # =========================
-# SESSION STATE (Your Logic)
+# SESSION STATE (Dynamic Ready)
 # =========================
-if "view" not in st.session_state:
-    st.session_state.view = "Profile"
-    
-if "edit_mode" not in st.session_state:
-    st.session_state.edit_mode = False
-    
-if "profile_data" not in st.session_state:
-    st.session_state.profile_data = {
-        "name": "Alex Johnson",
-        "email": "alex@example.com",
-        "qualification": "Bachelor of Design",
-        "mobile": "+1 987 654 321",
+
+def load_default_profile():
+    """Fallback profile (used only if no real data is loaded)"""
+    return {
+        "name": "User",
+        "email": "",
+        "qualification": "",
+        "mobile": "",
         "dob": datetime.date(2000, 1, 1),
         "country": "India",
-        "username": "alex_designer",
-        "gender": "Male",
-        "goal": "Get UI/UX Job",
-        "level": "Intermediate",
-        "interest": ["UI/UX"],
+        "username": "",
+        "gender": "Other",
+        "goal": "",
+        "level": "Beginner",
+        "interest": [],
     }
+
+
+# Initialize profile data safely
+if "profile_data" not in st.session_state:
+    st.session_state.profile_data = load_default_profile()
 
 # =========================
 # FUNCTIONS (Your Logic)
@@ -128,54 +172,62 @@ def get_password_status(password):
 # =========================
 # TOP RIGHT PROFILE MENU
 # =========================
-with st.popover("👤"):
-    st.markdown(f"**{st.session_state.profile_data['name']}**")
-    if st.button("View Profile", use_container_width=True):
-        st.session_state.view = "Profile"
-        st.rerun()
-    if st.button("Logout", type="secondary", use_container_width=True):
-        logout()
+def render_topbar():
+    with st.popover("👤"):
+        st.markdown(f"**{st.session_state.profile_data['name']}**")
+        if st.button("View Profile", use_container_width=True):
+            st.session_state.view = "Profile"
+            st.rerun()
+        if st.button("Logout", type="secondary", use_container_width=True):
+            logout()
 
 # =========================
 # SIDEBAR (Your Logic)
 # =========================
-with st.sidebar:
-    st.markdown("""
-    <div style="display:flex; align-items:center; gap:10px; padding-left:10px;">
-        <div style="width:40px;height:40px;border-radius:50%;background:#2563eb;color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;">A</div>
-        <div><b style="color:white;">Alex Johnson</b><br><span style='font-size:12px;color:gray;'>UI/UX Designer</span></div>
-    </div>
-    """, unsafe_allow_html=True)
+def render_sidebar():
+    with st.sidebar:
+        data = st.session_state.profile_data
+        initial = data["name"][0]
 
-    st.markdown('<div class="separator"></div>', unsafe_allow_html=True)
-    if st.button("Back", use_container_width=True):
-        st.session_state.view = "Landing"
-        st.rerun()
-    st.markdown('<div class="sidebar-title">ACCOUNT</div>', unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="display:flex; align-items:center; gap:10px; padding-left:10px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:#2563eb;color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;">{initial}</div>
+            <div>
+                <b style="color:white;">{data['name']}</b><br>
+                <span style='font-size:12px;color:gray;'>{data.get('goal','User')}</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    if st.button("👤 Profile"): st.session_state.view = "Profile"
-    if st.button("⚙️ Settings"): st.session_state.view = "Settings"
-    if st.button("🔐 Security"): st.session_state.view = "Security"
-    if st.button("🔗 Connected Accounts"): st.session_state.view = "Connections"
-    if st.button("🛡️ Privacy"): st.session_state.view = "Privacy"
+        st.markdown('<div class="separator"></div>', unsafe_allow_html=True)
+        if st.button("Back to Chat", use_container_width=True):
+            st.session_state.page = "llm_ui" # Change state back to chat
+            st.rerun()
+        st.markdown('<div class="sidebar-title">ACCOUNT</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="sidebar-title">INSIGHTS</div>', unsafe_allow_html=True)
-    if st.button("📊 Profile Insights"): st.session_state.view = "Insights"
-    if st.button("🤖 AI Insights"): st.session_state.view = "AI"
-    if st.button("🕒 Activity Log"): st.session_state.view = "Activity"
+        if st.button("👤 Profile"): st.session_state.view = "Profile"
+        if st.button("⚙️ Settings"): st.session_state.view = "Settings"
+        if st.button("🔐 Security"): st.session_state.view = "Security"
+        if st.button("🔗 Connected Accounts"): st.session_state.view = "Connections"
+        if st.button("🛡️ Privacy"): st.session_state.view = "Privacy"
 
-    st.markdown('<div class="sidebar-title">OTHER</div>', unsafe_allow_html=True)
-    if st.button("💳 Billing"): st.session_state.view = "Billing"
-    if st.button("ℹ️ About"): st.session_state.view = "About"
+        st.markdown('<div class="sidebar-title">INSIGHTS</div>', unsafe_allow_html=True)
+        if st.button("📊 Profile Insights"): st.session_state.view = "Insights"
+        if st.button("🤖 AI Insights"): st.session_state.view = "AI"
+        if st.button("🕒 Activity Log"): st.session_state.view = "Activity"
 
-    st.markdown('<div class="logout-container">', unsafe_allow_html=True)
-    if st.button("🚪 Logout"): logout()
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-title">OTHER</div>', unsafe_allow_html=True)
+        if st.button("💳 Billing"): st.session_state.view = "Billing"
+        if st.button("ℹ️ About"): st.session_state.view = "About"
+
+        st.markdown('<div class="logout-container">', unsafe_allow_html=True)
+        if st.button("🚪 Logout"): logout()
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================
 # PAGES (Your Logic)
 # =========================
-if st.session_state.view == "Profile":
+def render_profile():
     st.title("User Profile")
     data = st.session_state.profile_data
     disabled = not st.session_state.edit_mode
@@ -213,6 +265,7 @@ if st.session_state.view == "Profile":
     with col3:
         if st.session_state.edit_mode:
             if st.button("Save"):
+                add_activity("👤", "Profile Updated", "User updated profile details")
                 st.session_state.profile_data.update({
                     "name": name, "email": email, "qualification": qualification,
                     "mobile": mobile, "dob": dob, "country": country,
@@ -224,7 +277,7 @@ if st.session_state.view == "Profile":
                 st.rerun()
     
 # SETTINGS
-elif st.session_state.view == "Settings":
+def render_settings():
     st.title("Settings")
     tab1, tab2, tab3, tab4 = st.tabs(
         ["Appearance", "Notifications", "General", "Help"]
@@ -293,7 +346,7 @@ elif st.session_state.view == "Settings":
     
 
 # --- SECURITY VIEW ---
-elif st.session_state.view == "Security":
+def render_security():
     st.title("Security & Sessions")
     st.write("Manage your password, authentication methods, and active devices.")
     st.divider()
@@ -324,7 +377,7 @@ elif st.session_state.view == "Security":
         confirm_pw = st.text_input("Confirm New Password", type="password", disabled=not is_editing)
     
     # Password Buttons
-    btn_spacer, btn_col1, btn_col2 = st.columns([8, 1, 1])
+    btn_spacer, btn_col1, btn_col2 = st.columns([6, 2, 2])
     if not is_editing:
         with btn_col2:
             if st.button("Edit", key="edit_pw_btn", use_container_width=True):
@@ -336,14 +389,20 @@ elif st.session_state.view == "Security":
                 st.session_state.edit_mode = False
                 st.rerun()
         with btn_col2:
-            if st.button("Save", key="save_pw_btn", type="primary", use_container_width=True):
                 # Replace with your actual get_password_status check
-                if new_pw == confirm_pw and len(new_pw) >= 8:
+            if st.button("Save", key="save_pw_btn", type="primary", use_container_width=True):
+                add_activity("🔐", "Password Changed", "User updated account password")
+                status = get_password_status(new_pw)
+                if new_pw == confirm_pw and all(status.values()):
                     st.session_state.edit_mode = False
                     st.success("Password Updated!")
                     st.rerun()
                 else:
-                    st.error("Check requirements or password mismatch.")
+                    st.session_state.pw_error = True
+
+            # Show error below (FULL WIDTH)
+            if st.session_state.get("pw_error"):
+                st.error("Check requirements or password mismatch.")
 
     st.divider()
 
@@ -380,6 +439,7 @@ elif st.session_state.view == "Security":
                 with v1:
                     if st.button("Verify", key="v_2fa", type="primary", use_container_width=True):
                         if u_code == st.session_state.test_code:
+                            add_activity("🛡️", "2FA Enabled", "Two-factor authentication enabled")
                             st.session_state.two_fa_enabled = True
                             st.session_state.test_code = None
                             st.success("2FA Enabled!")
@@ -396,6 +456,7 @@ elif st.session_state.view == "Security":
             st.caption("Your account is protected by an additional security layer.")
         with c2:
             if st.button("Disable", key="dis_2fa", use_container_width=True):
+                add_activity("⚠️", "2FA Disabled", "Two-factor authentication disabled")
                 st.session_state.two_fa_enabled = False
                 st.rerun()
 
@@ -427,14 +488,15 @@ elif st.session_state.view == "Security":
     st.caption("🛡️ Security Tip: If you see a device you don't recognize, revoke it and change your password immediately.")
 
 # CONNECTIONS
-elif st.session_state.view == "Connections":
-    st.title("Connected Accounts")
-    st.write("Manage your linked social and professional accounts.")
-    
+def render_connections(): 
+    st.title("Connected Accounts") 
+    st.write("Manage your linked social and professional accounts.") 
     st.divider()
+    def account_row(name, icon="🔗"):
+        data = st.session_state.connections[name]
+        is_connected = data["connected"]
+        email = data["email"]
 
-    # --- HELPER FUNCTION FOR CLEAN ROWS ---
-    def account_row(name, email, is_connected, icon="🔗"):
         col1, col2, col3 = st.columns([0.5, 3, 1.5])
         
         with col1:
@@ -449,25 +511,36 @@ elif st.session_state.view == "Connections":
                 
         with col3:
             if is_connected:
-                # Use a unique key for every button
                 if st.button("Disconnect", key=f"btn_dis_{name}", use_container_width=True):
-                    # Add logic to disconnect here
-                    pass
+                    # ✅ Update state
+                    st.session_state.connections[name]["connected"] = False
+                    st.session_state.connections[name]["email"] = None
+                    
+                    # ✅ Log activity
+                    add_activity("❌", f"{name} Disconnected", f"{name} account removed")
+                    
+                    st.rerun()
             else:
                 if st.button("Connect", key=f"btn_con_{name}", type="primary", use_container_width=True):
-                    # Add logic to connect here
-                    pass
-        st.divider()
+                    # ✅ Simulate linking (later replace with OAuth)
+                    st.session_state.connections[name]["connected"] = True
+                    st.session_state.connections[name]["email"] = f"{name.lower()}@user.com"
+                    
+                    # ✅ Log activity
+                    add_activity("🔗", f"{name} Connected", f"{name} account linked")
+                    
+                    st.rerun()
+
 
     # --- RENDER THE ACCOUNTS ---
     # In a real app, these values would come from your FastAPI backend
-    account_row("Google", "harshada.c@gmail.com", is_connected=True, icon="🌐")
-    account_row("GitHub", "harshada-codes", is_connected=True, icon="💻")
-    account_row("LinkedIn", None, is_connected=False, icon="👔")
+    account_row("Google", icon="🌐")
+    account_row("GitHub", icon="💻")
+    account_row("LinkedIn", icon="👔")
 
 # PRIVACY
 # --- PRIVACY VIEW ---
-elif st.session_state.view == "Privacy":
+def render_privacy():
     st.title("Privacy & Data Control")
     st.write("Manage your personal information, visibility, and data portability.")
     st.divider()
@@ -530,13 +603,19 @@ elif st.session_state.view == "Privacy":
                 json_data = json.dumps(export_payload, indent=4)
 
                 # Button now stays inside the small column
-                st.download_button(
-                    label="📥 Download",
-                    data=json_data,
-                    file_name="harshada_data_export.json",
-                    mime="application/json",
+                pdf_file = generate_pdf(export_payload)
+
+                download_clicked = st.download_button(
+                    label="📥 Download PDF",
+                    data=pdf_file,
+                    file_name="user_data.pdf",
+                    mime="application/pdf",
                     use_container_width=True
                 )
+
+                # ✅ Log only when user clicks
+                if download_clicked:
+                    add_activity("📄", "Data Exported", "User downloaded PDF report")
             except Exception as e:
                 st.error("Export Error")
 
@@ -561,6 +640,7 @@ elif st.session_state.view == "Privacy":
         c_col1, c_col2, c_spacer = st.columns([1, 1, 2])
         with c_col1:
             if st.button("Confirm", type="primary", key="final_del", use_container_width=True):
+                add_activity("🗑️", "Account Deleted", "User permanently deleted account")
                 st.success("Account deleted.")
                 st.rerun()
         with c_col2:
@@ -570,44 +650,57 @@ elif st.session_state.view == "Privacy":
 
 # PROFILE INSIGHTS
 # --- PROFILE INSIGHTS VIEW ---
-elif st.session_state.view == "Insights":
+def render_insights():
     st.title("Profile Insights")
     st.write("AI-driven analysis of your learning progress and career readiness.")
     st.divider()
 
-    # BACKEND PREP: This dictionary will eventually be replaced by your FastAPI response
-    # insights_data = requests.get(f"{BACKEND_URL}/user/insights").json()
-    insights_data = {
-        "metrics": {
-            "completed": "12",
-            "in_progress": "5",
-            "readiness": "85%"
-        },
-        "suggestions": [
-            {"title": "Primary Focus", "text": "Apply your current theoretical knowledge to a new end-to-end technical project.", "type": "info"},
-            {"title": "Learning Strength", "text": "Your recent activity shows high consistency. This pace is optimal for skill retention.", "type": "success"},
-            {"title": "Next Milestone", "text": "Review your 'In Progress' list and aim to complete at least 2 topics by the weekend.", "type": "warning"},
-            {"title": "Career Growth", "text": "Align your learning path with the specific requirements of your target internship roles.", "type": "info"}
-        ]
-    }
+    # =========================
+    # DYNAMIC DATA SOURCE
+    # =========================
+    if "insights_data" not in st.session_state:
+        st.session_state.insights_data = None
 
-    # --- SECTION 1: KEY PERFORMANCE METRICS ---
+    def load_default_insights():
+        return {
+            "metrics": {
+                "completed": 0,
+                "in_progress": 0,
+                "readiness": "0%"
+            },
+            "suggestions": []
+        }
+
+    # Use backend data if available, else fallback
+    insights_data = st.session_state.insights_data or load_default_insights()
+
+    metrics = insights_data.get("metrics", {})
+    suggestions = insights_data.get("suggestions", [])
+
+    # =========================
+    # SECTION 1: METRICS
+    # =========================
     m1, m2, m3 = st.columns(3)
     with m1:
-        st.metric(label="Topics Completed", value=insights_data["metrics"]["completed"], delta="↑ 2")
+        st.metric("Topics Completed", metrics.get("completed", 0))
     with m2:
-        st.metric(label="In Progress", value=insights_data["metrics"]["in_progress"], delta="-1", delta_color="inverse")
+        st.metric("In Progress", metrics.get("in_progress", 0))
     with m3:
-        st.metric(label="Skill Readiness", value=insights_data["metrics"]["readiness"], delta="5%")
+        st.metric("Skill Readiness", metrics.get("readiness", "0%"))
 
     st.divider()
 
-    # --- SECTION 2: LEARNING PROGRESS ---
+    # =========================
+    # SECTION 2: PROGRESS BAR
+    # =========================
     st.subheader("Overall Learning Progress")
-    completed = int(insights_data["metrics"]["completed"])
-    total = completed + int(insights_data["metrics"]["in_progress"])
-    progress_val = int((completed / total) * 100)
-    
+
+    completed = int(metrics.get("completed", 0))
+    in_progress = int(metrics.get("in_progress", 0))
+    total = completed + in_progress
+
+    progress_val = int((completed / total) * 100) if total > 0 else 0
+
     col_p1, col_p2 = st.columns([4, 1])
     with col_p1:
         st.progress(progress_val / 100)
@@ -616,157 +709,210 @@ elif st.session_state.view == "Insights":
 
     st.divider()
 
-    # --- SECTION 3: AI-DRIVEN SUGGESTIONS (High Visibility) ---
+    # =========================
+    # SECTION 3: SUGGESTIONS
+    # =========================
     st.subheader("🎯 Personalized Recommendations")
-    
-    # Helper for high-visibility text
+
     def insight_card(title, text, type="info"):
-        if type == "info": st.info(f"**{title}**")
-        elif type == "success": st.success(f"**{title}**")
-        elif type == "warning": st.warning(f"**{title}**")
-        
-        # High visibility CSS: White color, 16px font
+        if type == "info":
+            st.info(f"**{title}**")
+        elif type == "success":
+            st.success(f"**{title}**")
+        elif type == "warning":
+            st.warning(f"**{title}**")
+
         st.markdown(f"""
-            <p style='color: #FFFFFF; font-size: 16px; font-weight: 400; margin-top: -10px; margin-bottom: 20px;'>
+            <p style='color: #FFFFFF; font-size: 16px; margin-top: -10px; margin-bottom: 20px;'>
                 {text}
             </p>
         """, unsafe_allow_html=True)
 
-    # Displaying cards in a 2x2 grid
-    row1_col1, row1_col2 = st.columns(2)
-    with row1_col1:
-        insight_card(insights_data["suggestions"][0]["title"], insights_data["suggestions"][0]["text"], "info")
-    with row1_col2:
-        insight_card(insights_data["suggestions"][1]["title"], insights_data["suggestions"][1]["text"], "success")
+    if suggestions:
+        cols = st.columns(2)
+        for i, item in enumerate(suggestions):
+            with cols[i % 2]:
+                insight_card(
+                    item.get("title", ""),
+                    item.get("text", ""),
+                    item.get("type", "info")
+                )
+    else:
+        st.info("No insights available yet.")
 
-    row2_col1, row2_col2 = st.columns(2)
-    with row2_col1:
-        insight_card(insights_data["suggestions"][2]["title"], insights_data["suggestions"][2]["text"], "warning")
-    with row2_col2:
-        # Fixed 'Career Growth' card - no more Python help box!
-        insight_card(insights_data["suggestions"][3]["title"], insights_data["suggestions"][3]["text"], "info")
-
-    # --- SECTION 4: ACTIONS ---
+    # =========================
+    # SECTION 4: ACTION
+    # =========================
     st.divider()
     _, q_col = st.columns([3, 1])
     with q_col:
         if st.button("Refresh Analysis", use_container_width=True):
             st.toast("Fetching latest backend insights...")
+
+            # 👉 LATER replace this with API call
+            # st.session_state.insights_data = requests.get(API).json()
+
+            # TEMP: simulate update
+            st.session_state.insights_data = {
+                "metrics": {
+                    "completed": 12,
+                    "in_progress": 5,
+                    "readiness": "85%"
+                },
+                "suggestions": [
+                    {"title": "Primary Focus", "text": "Build real projects.", "type": "info"},
+                    {"title": "Consistency", "text": "You are doing well.", "type": "success"},
+                ]
+            }
+
             st.rerun()
 
 # --- AI INSIGHTS VIEW ---
-elif st.session_state.view == "AI":
+def render_ai():
     st.title("AI Insights & Recommendations")
     st.write("Machine Learning-driven roadmap based on your current skill level.")
     st.divider()
 
-    # DATA PREP: This dictionary will be your FastAPI JSON response later
-    ai_data = {
-        "goal": st.session_state.profile_data.get('goal', 'Technical Role'),
-        "level": st.session_state.profile_data.get('level', 'Intermediate'),
-        "suggestions": [
-            {"title": "Focus: Portfolio Projects", "text": "Move beyond basic scripts. Build end-to-end applications that solve specific industry problems.", "type": "info"},
-            {"title": "Focus: UX Case Studies", "text": "Document the 'Why' behind your technical decisions. Explain your architecture to non-technical stakeholders.", "type": "success"},
-            {"title": "Action: Practical Tasks", "text": "Practice real-world system debugging and data cleaning tasks instead of just following tutorials.", "type": "warning"},
-            {"title": "Core Strategy", "text": "Shift from theory to practical execution. Build a CI/CD pipeline for your existing Streamlit apps.", "type": "info"}
-        ]
-    }
+    # ✅ Dynamic user data (NOT static anymore)
+    profile = st.session_state.profile_data
+    goal = profile.get("goal", "Technical Role")
+    level = profile.get("level", "Intermediate")
 
-    # --- SECTION 1: STATUS SUMMARY ---
+    # ✅ Dynamic suggestion logic (TEXT SAME STYLE, but selected smartly)
+    if level == "Beginner":
+        suggestions = [
+            {"title": "Focus: Fundamentals", "text": "Build strong basics in Python, logic building, and problem-solving.", "type": "info"},
+            {"title": "Focus: Guided Learning", "text": "Follow structured courses instead of random tutorials.", "type": "success"},
+            {"title": "Action: Practice", "text": "Solve basic problems daily to build confidence.", "type": "warning"},
+            {"title": "Core Strategy", "text": "Consistency is more important than complexity at this stage.", "type": "info"}
+        ]
+
+    elif level == "Intermediate":
+        suggestions = [
+            {"title": "Focus: Portfolio Projects", "text": "Move beyond basic scripts. Build end-to-end applications that solve specific industry problems.", "type": "info"},
+            {"title": "Focus: Real-world Thinking", "text": "Start understanding system design and real use-cases.", "type": "success"},
+            {"title": "Action: Practical Tasks", "text": "Work on debugging and data cleaning tasks.", "type": "warning"},
+            {"title": "Core Strategy", "text": "Shift from theory to practical execution.", "type": "info"}
+        ]
+
+    else:  # Advanced
+        suggestions = [
+            {"title": "Focus: Specialization", "text": "Choose a niche like AI, Backend, or Data Engineering.", "type": "info"},
+            {"title": "Focus: Scaling Systems", "text": "Work on scalable architectures and optimization.", "type": "success"},
+            {"title": "Action: Open Source", "text": "Contribute to real-world projects.", "type": "warning"},
+            {"title": "Core Strategy", "text": "Build authority in one domain instead of being generic.", "type": "info"}
+        ]
+
+    # --- STATUS ---
     c1, c2 = st.columns(2)
     with c1:
-        st.info(f"**Current Goal:** {ai_data['goal']}")
+        st.info(f"**Current Goal:** {goal}")
     with c2:
-        st.success(f"**Skill Level:** {ai_data['level']}")
+        st.success(f"**Skill Level:** {level}")
 
     st.divider()
 
-    # --- SECTION 2: SMART RECOMMENDATIONS (High Visibility) ---
+    # --- CARDS ---
     st.subheader("🚀 Smart Recommendations")
 
-    # Reuse the same high-visibility helper logic for consistency
-    def ai_insight_card(title, text, type="info"):
+    def ai_card(title, text, type="info"):
         if type == "info": st.info(f"**{title}**")
         elif type == "success": st.success(f"**{title}**")
         elif type == "warning": st.warning(f"**{title}**")
-        
-        # High visibility CSS: White color, 16px font
+
         st.markdown(f"""
-            <p style='color: #FFFFFF; font-size: 16px; font-weight: 400; margin-top: -10px; margin-bottom: 20px;'>
+            <p style='color: #FFFFFF; font-size: 16px; margin-top: -10px; margin-bottom: 20px;'>
                 {text}
             </p>
         """, unsafe_allow_html=True)
 
-    # Grid Display
-    row1_c1, row1_c2 = st.columns(2)
-    with row1_c1:
-        ai_insight_card(ai_data["suggestions"][0]["title"], ai_data["suggestions"][0]["text"], "info")
-    with row1_c2:
-        ai_insight_card(ai_data["suggestions"][1]["title"], ai_data["suggestions"][1]["text"], "success")
+    col1, col2 = st.columns(2)
+    with col1:
+        ai_card(**suggestions[0])
+        ai_card(**suggestions[2])
+    with col2:
+        ai_card(**suggestions[1])
+        ai_card(**suggestions[3])
 
-    row2_c1, row2_c2 = st.columns(2)
-    with row2_c1:
-        ai_insight_card(ai_data["suggestions"][2]["title"], ai_data["suggestions"][2]["text"], "warning")
-    with row2_c2:
-        ai_insight_card(ai_data["suggestions"][3]["title"], ai_data["suggestions"][3]["text"], "info")
-        
-    # --- SECTION 3: ACTIONS ---
     st.divider()
-    _, ai_btn_col = st.columns([3, 1])
-    with ai_btn_col:
+
+    _, btn_col = st.columns([3, 1])
+    with btn_col:
         if st.button("Generate New Insights", use_container_width=True):
             st.toast("AI is analyzing your profile...")
             st.rerun()
 
 # active log
 # --- ACTIVITY LOG VIEW ---
-elif st.session_state.view == "Activity":
+def render_activity():
     st.title("Activity Log")
     st.write("A secure history of your account actions and security events.")
     st.divider()
 
-    # MOCK DATA: This list will eventually come from your FastAPI 'GET /user/activity'
-    activity_data = [
-        {"icon": "🔐", "event": "Logged In", "detail": "Session started from Chrome (Windows)", "time": "Today, 10:30 AM"},
-        {"icon": "🔑", "event": "Password Changed", "detail": "Account security credentials updated", "time": "Yesterday, 04:15 PM"},
-        {"icon": "📲", "event": "2FA Enabled", "detail": "Two-Factor Authentication activated", "time": "2 days ago, 09:00 AM"},
-        {"icon": "👤", "event": "Profile Updated", "detail": "Changed B.Tech Batch to 2026", "time": "5 days ago, 11:20 AM"},
-        {"icon": "🛡️", "event": "Session Revoked", "detail": "Mobile device (Samsung Galaxy) disconnected", "time": "1 week ago, 02:45 PM"}
-    ]
+    # ✅ 1. Initialize dynamic activity store
+    if "activity_logs" not in st.session_state:
+        st.session_state.activity_logs = []
 
-    # --- TIMELINE RENDERER ---
-    for i, log in enumerate(activity_data):
+    logs = st.session_state.activity_logs
+
+    # ✅ 2. Empty state
+    if len(logs) == 0:
+        st.info("No activity yet. Your actions will appear here.")
+        return
+
+    # ✅ 3. Timeline Renderer
+    for i, log in enumerate(reversed(logs)):  # latest first
         with st.container():
-            # [Icon, Event Details, Timestamp]
             col_icon, col_info, col_time = st.columns([0.5, 3, 1.5])
-            
+
             with col_icon:
                 st.markdown(f"### {log['icon']}")
-            
+
             with col_info:
                 st.markdown(f"**{log['event']}**")
-                # Using your high-visibility 16px white text
-                st.markdown(f"<p style='color: #FFFFFF; font-size: 15px; opacity: 0.9; margin-top: -10px;'>{log['detail']}</p>", unsafe_allow_html=True)
-            
-            with col_time:
-                # Right-aligned timestamp in italics
-                st.markdown(f"<p style='text-align: right; color: #AAAAAA; font-style: italic; font-size: 13px;'>{log['time']}</p>", unsafe_allow_html=True)
+                st.markdown(
+                    f"<p style='color: #FFFFFF; font-size: 15px; opacity: 0.9; margin-top: -10px;'>{log['detail']}</p>",
+                    unsafe_allow_html=True
+                )
 
-        # Add a divider between entries, but skip the last one for a cleaner look
-        if i < len(activity_data) - 1:
+            with col_time:
+                st.markdown(
+                    f"<p style='text-align: right; color: #AAAAAA; font-style: italic; font-size: 13px;'>{log['time']}</p>",
+                    unsafe_allow_html=True
+                )
+
+        if i < len(logs) - 1:
             st.divider()
 
-    # --- FOOTER ACTIONS ---
+    # ✅ 4. Footer actions
     st.divider()
-    _, btn_col = st.columns([3, 1])
-    with btn_col:
-        # Standard SRE feature to clear the view (for frontend testing)
+    col1, col2 = st.columns([2, 1])
+
+    with col2:
         if st.button("Refresh Logs", use_container_width=True):
-            st.toast("Fetching latest audit logs...")
+            st.toast("Fetching latest logs...")
             st.rerun()
 
+    with col1:
+        if st.button("Clear Logs", use_container_width=True):
+            st.session_state.activity_logs = []
+            st.toast("Logs cleared")
+            st.rerun()
+            st.rerun()
+from datetime import datetime
+
+def add_activity(icon, event, detail):
+    if "activity_logs" not in st.session_state:
+        st.session_state.activity_logs = []
+
+    st.session_state.activity_logs.append({
+        "icon": icon,
+        "event": event,
+        "detail": detail,
+        "time": datetime.now().strftime("%d %b, %I:%M %p")
+    })
 # --- BILLING / EXPLORE PLANS VIEW ---
-elif st.session_state.view == "Billing":
+def render_billing():
     # 1. Inject Custom CSS for the 'Card' Look
     st.markdown("""
         <style>
@@ -781,6 +927,7 @@ elif st.session_state.view == "Billing":
         .plan-card:hover {
             border-color: #58A6FF;
             transform: translateY(-5px);
+            box-shadow: 0 4px 20px rgba(88, 166, 255, 0.2);
         }
         .price-text {
             font-size: 36px;
@@ -816,10 +963,10 @@ elif st.session_state.view == "Billing":
                 <p style="color: #8B949E; font-size: 12px;">Free for everyone</p>
                 <br>
                 <div class="feature-list">
-                    ✓ 5 Active Projects<br>
+                    ✓ Course-based AI Assistance<br>
                     ✓ Basic AI Insights<br>
                     ✓ Community Support<br>
-                    ✓ Public Profile
+                    ✓ Limited Queries per Day 
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -838,15 +985,19 @@ elif st.session_state.view == "Billing":
                 <br>
                 <div class="feature-list">
                     ✓ Everything in Free, plus:<br>
-                    ✓ Unlimited Projects<br>
-                    ✓ Advanced SRE Metrics<br>
+                    ✓ Access to Neuxa AI (Limited Usage)<br>
+                    ✓ Advanced Learning Insights<br>
                     ✓ Priority AI Support<br>
-                    ✓ Private Profile
+                    ✓ Increased Query Limits  
                 </div>
             </div>
         """, unsafe_allow_html=True)
         if st.button("Upgrade to Pro", key="pro_btn", type="primary", use_container_width=True):
             st.toast("Connecting to Secure Payment...")
+            st.session_state.view = "Pro_Details"
+            st.rerun()
+            add_activity("💳", "Plan Upgrade", "User upgraded to Pro plan")
+    
 
     # --- MAX PLAN ---
     with col3:
@@ -860,22 +1011,120 @@ elif st.session_state.view == "Billing":
                 <br>
                 <div class="feature-list">
                     ✓ Everything in Pro, plus:<br>
-                    ✓ API Access<br>
+                    ✓ Full Access to All AI Systems<br>
                     ✓ Early Access Features<br>
-                    ✓ Resume Review AI<br>
-                    ✓ Custom Themes
+                    ✓ Early Access to New AI Features<br>
+                    ✓ Unlimited Neuxa AI Usage  
                 </div>
             </div>
         """, unsafe_allow_html=True)
         if st.button("Try Max", key="max_btn", use_container_width=True):
             st.toast("Checking Max availability...")
+            st.session_state.view = "Max_Details"
+            st.rerun()
+            add_activity("💳", "Plan Upgrade", "User upgraded to max plan")
 
     st.write("##")
     st.divider()
     st.caption("Looking for enterprise solutions? Contact support.")
+def render_pro_payment():
+    st.title("💳 Pro Plan Checkout")
+    st.caption("Secure payment interface")
 
+    st.divider()
+
+    # Plan Summary
+    st.subheader("Plan Summary")
+    st.info("Pro Plan – ₹499/month")
+
+    # User Info
+    st.subheader("Billing Details")
+    name = st.text_input("Full Name")
+    email = st.text_input("Email")
+
+    # Payment Method
+    st.subheader("Payment Method")
+    method = st.radio("Choose method", ["UPI", "Card", "Net Banking"])
+
+    if method == "UPI":
+        st.text_input("Enter UPI ID", placeholder="example@upi")
+
+    elif method == "Card":
+        st.text_input("Card Number")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.text_input("Expiry")
+        with col2:
+            st.text_input("CVV")
+
+    elif method == "Net Banking":
+        st.selectbox("Select Bank", ["SBI", "HDFC", "ICICI", "Axis"])
+
+    st.divider()
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("⬅ Back", use_container_width=True):
+            st.session_state.view = "Billing"
+            st.rerun()
+
+    with col2:
+        if st.button("💳 Pay ₹499", type="primary", use_container_width=True):
+            add_activity("💳", "Payment Success", "User upgraded to Pro")
+            st.success("Payment Successful! Pro Plan Activated 🎉")
+
+            st.session_state.plan = "Pro"
+            st.rerun()
+            
+def render_max_payment():
+    st.title("🚀 Max Plan Checkout")
+    st.caption("Secure payment interface")
+
+    st.divider()
+
+    st.subheader("Plan Summary")
+    st.success("Max Plan – ₹999/month")
+
+    st.subheader("Billing Details")
+    name = st.text_input("Full Name")
+    email = st.text_input("Email")
+
+    st.subheader("Payment Method")
+    method = st.radio("Choose method", ["UPI", "Card", "Net Banking"])
+
+    if method == "UPI":
+        st.text_input("Enter UPI ID")
+
+    elif method == "Card":
+        st.text_input("Card Number")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.text_input("Expiry")
+        with col2:
+            st.text_input("CVV")
+
+    elif method == "Net Banking":
+        st.selectbox("Select Bank", ["SBI", "HDFC", "ICICI", "Axis"])
+
+    st.divider()
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("⬅ Back", use_container_width=True):
+            st.session_state.view = "Billing"
+            st.rerun()
+
+    with col2:
+        if st.button("🚀 Pay ₹999", type="primary", use_container_width=True):
+            add_activity("💳", "Payment Success", "User upgraded to Max")
+            st.success("Payment Successful! Max Plan Activated 🎉")
+
+            st.session_state.plan = "Max"
+            st.rerun()
 # --- ABOUT VIEW ---
-elif st.session_state.view == "About":
+def render_about():
     # 1. Custom CSS for a centered 'Hero' look
     st.markdown("""
         <style>
@@ -912,7 +1161,6 @@ elif st.session_state.view == "About":
                     <span class="tech-badge">Python 3.10</span>
                     <span class="tech-badge">Streamlit</span>
                     <span class="tech-badge">FastAPI</span>
-                    <span class="tech-badge">SRE Ready</span>
                     <span class="tech-badge">v1.0.2-stable</span>
                 </div>
             </div>
@@ -953,3 +1201,53 @@ elif st.session_state.view == "About":
     # --- QUICK ACTION ---
     if st.button("Check for Updates", use_container_width=True):
         st.toast("You are using the latest version!")
+def init_profile_state():
+    if "profile_data" not in st.session_state:
+        st.session_state.profile_data = load_default_profile()
+        
+    if "connections" not in st.session_state:
+        st.session_state.connections = {
+            "Google": {"connected": False, "email": ""},
+            "GitHub": {"connected": False, "email": ""},
+            "LinkedIn": {"connected": False, "email": ""}
+        }
+    if "edit_mode" not in st.session_state: 
+        st.session_state.edit_mode = False
+    if "view" not in st.session_state:
+        st.session_state.view = "Profile"
+
+        
+def render_app():
+    # Top UI (always visible)
+    inject_profile_styles()
+    init_profile_state()
+    render_topbar()   # your popover
+    render_sidebar()  # your sidebar
+
+    # Page routing
+    ROUTES = {
+        "Profile": render_profile,
+        "Settings": render_settings,
+        "Security": render_security,
+        "Connections": render_connections,
+        "Privacy": render_privacy,
+        "Insights": render_insights,
+        "AI": render_ai,
+        "Activity": render_activity,
+        "Billing": render_billing,
+        "About": render_about,
+        "Pro_Details": render_pro_payment,
+        "Max_Details": render_max_payment,
+    }
+
+    ROUTES.get(st.session_state.view, render_profile)()
+def main():
+    st.set_page_config(
+        layout="wide",
+        page_title="Streamlit SaaS UI",
+        initial_sidebar_state="expanded"
+    )
+
+    render_app()    
+if __name__ == "__main__":    
+    main()

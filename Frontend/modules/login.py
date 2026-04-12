@@ -141,10 +141,6 @@ def inject_auth_styles():
 
 # --- 3. MASTER WRAPPER FUNCTION ---
 def render_auth_system():
-    """
-    Orchestrates the login, registration, and reset pages 
-    without changing the core logic.
-    """
     init_auth_state()
     inject_auth_styles()
 
@@ -174,7 +170,12 @@ def render_auth_system():
                     if st.button("Log In", type="primary"):
                         if email in st.session_state.users:
                             if st.session_state.users[email]["password"] == password:
+                                user_record = st.session_state.users[email]
+                                st.session_state.profile_data["name"] = user_record["name"]
+                                st.session_state.profile_data["email"] = email
                                 st.success("Login successful!")
+                                st.session_state.page = "llm_ui"  
+                                st.rerun()
                             else:
                                 st.error("Wrong password.")
                         else:
@@ -210,6 +211,8 @@ def render_auth_system():
                             "name": full_name,
                             "password": password
                         }
+                        st.session_state.profile_data["name"] = full_name
+                        st.session_state.profile_data["email"] = email
                         st.success("Account created successfully!")
                         st.info("Please log in with your new credentials.")
 

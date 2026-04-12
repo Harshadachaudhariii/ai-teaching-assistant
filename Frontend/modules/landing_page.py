@@ -352,8 +352,12 @@ def render_navbar():
         st.write('<div style="margin-top: 8px;">', unsafe_allow_html=True)
         n_c1, n_c2 = st.columns(2)
         if n_c1.button("Login", key="nav_login"):
-            st.session_state.focus_trigger = True 
-        with n_c2: st.button("Get Started", key="nav_gs")
+            st.session_state.page = "login"
+            st.rerun()
+        with n_c2: 
+            if st.button("Get Started", key="nav_gs"):
+                st.session_state.page = "login" # Or "signup" if you have a separate view
+                st.rerun()
         
 # --- 3. HERO SECTION ---
 def render_hero():
@@ -517,6 +521,8 @@ def render_cta_and_scroller():
         """, unsafe_allow_html=True)
         if st.button("Get Started for Free", key="cta_btn"):
             st.balloons()
+            st.session_state.page = "login" # Or "signup" if you have a separate view
+            st.rerun()
             
     st.markdown("""
     <div class="scroll-container">

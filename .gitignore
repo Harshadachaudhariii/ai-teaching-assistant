@@ -5,3 +5,4 @@ a.py
 ap.py
 appp.py
 .venv/
+__pycache__

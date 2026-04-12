@@ -11,7 +11,10 @@ def inject_ui_styles():
         @import url('https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@300;400;600&display=swap');
 
         .stApp {{ background-color: #0a0a0a; color: #f3f4f6; font-family: 'Inter', sans-serif; line-height: 1.6; }}
-        
+        /* This hides the automatic 'Pages' navigation menu in the sidebar */
+        [data-testid="stSidebarNav"] {{
+            display: none !important;
+        }}
         /* Typography & Visual Hierarchy */
         .hero-title {{
             text-align: center; font-family: 'Lexend Deca', sans-serif;
@@ -146,10 +149,12 @@ def render_sidebar():
         """, unsafe_allow_html=True)
 
         if st.button("👤 View Profile", use_container_width=True):
-            st.toast("Opening profile settings...", icon="⚙️")
+            st.session_state.page = "profile"  # Tell app.py to switch to the profile view
+            st.rerun()                        # Refresh to trigger the change
             
         if st.button("🚪 Logout", use_container_width=True):
             st.session_state.clear()
+            st.session_state.page = "login"   # Reset to login page
             st.rerun()
 
 def render_message(role, text):
