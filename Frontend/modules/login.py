@@ -1,6 +1,6 @@
 import streamlit as st
 import uuid
-
+from email_reset_pass import render_reset_flow
 # --- 1. CONFIGURATION & STATE ---
 def init_auth_state():
     # store reset tokens
@@ -222,13 +222,7 @@ def render_auth_system():
             st.markdown('</div>', unsafe_allow_html=True)
 
         elif st.session_state.page == "reset":
-            st.title("Password Reset")
-            with st.container(border=True):
-                st.text_input("Email")
-                if st.button("Reset", type="primary"):
-                    st.info("Link sent!")
-            if st.button("Back to Login", type="tertiary", key="back_reset"):
-                go_to("login")
+            render_reset_flow()
 
 # --- 4. EXECUTION ---
 if __name__ == "__main__":

@@ -1,8 +1,6 @@
 jsons/
 readchunks/
 embeddings.joblib
-a.py
-ap.py
-appp.py
+app/
 .venv/
 __pycache__
