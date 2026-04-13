@@ -186,7 +186,8 @@ def render_auth_system():
 
 def render_forgot_password_flow():
     """Main Orchestrator for the Forgot Password Flow"""
-    
+    if "reset_step" not in st.session_state:
+        st.session_state.reset_step = "email"
     # STEP 1: EMAIL INPUT
     if st.session_state.reset_step == "email":
         st.title("Forgot Password")

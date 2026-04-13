@@ -80,7 +80,7 @@ def inject_ui_styles():
 def init_store():
     if "chats" not in st.session_state: st.session_state.chats = {}  
     if "active_id" not in st.session_state: st.session_state.active_id = None
-    if "ai_mode" not in st.session_state: st.session_state.ai_mode = "LearnAI"
+    if "ai_mode" not in st.session_state: st.session_state.ai_mode = "EchoAI"
 
 def create_thread():
     cid = str(uuid.uuid4())
@@ -95,15 +95,18 @@ def create_thread():
 # --- 3. UI COMPONENTS ---
 def render_sidebar():
     with st.sidebar:
-        st.markdown("<h2 style='letter-spacing:-1.5px; font-weight:600;'>Nexus <span style='color:#3b82f6;'>AI</span></h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='letter-spacing:-1.5px; font-weight:600;'>Nexa<span style='color:#3b82f6;'>AI</span></h2>", unsafe_allow_html=True)
         
         st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
         mode = st.radio(
             "Select Intelligence Engine",
-            ["LearnAI", "Study Buddy"],
-            help="LearnAI: General topics | Study Buddy: Personalized learning partner"
+            ["EchoAI", "AtlasAI"],
+            help="EchoAI: General topics | AtlasAI: Personalized learning partner"
         )
-        st.session_state.ai_mode = mode
+        if mode != st.session_state.ai_mode:
+            st.session_state.ai_mode = mode
+            create_thread()   # ✅ new chat
+            st.rerun()
         
         st.markdown("---")
         if st.button("＋ New Chat", use_container_width=True):
@@ -124,7 +127,7 @@ def render_sidebar():
                 is_active = cid == st.session_state.active_id
                 cols = st.columns([0.85, 0.15])
                 with cols[0]:
-                    label = f"📖 {data['title'][:18]}" if data.get('mode') == "Study Buddy" else f"{data['title'][:18]}"
+                    label = f"📖 {data['title'][:18]}" if data.get('mode') == "AtlasAI" else f"{data['title'][:18]}"
                     if st.button(label, key=f"n_{cid}", type="primary" if is_active else "secondary"):
                         st.session_state.active_id = cid
                         st.rerun()
@@ -161,7 +164,7 @@ def render_message(role, text):
     if role == "user":
         st.markdown(f'<div class="user-bubble">{text}</div><div style="clear:both"></div>', unsafe_allow_html=True)
     else:
-        icon = "🎓" if st.session_state.ai_mode == "Study Buddy" else "🧠"
+        icon = "🎓" if st.session_state.ai_mode == "AtlasAI" else "🧠"
         with st.chat_message("assistant", avatar=icon):
             st.markdown(text)
 
@@ -171,7 +174,7 @@ def render_hero_screen():
     with mid:
         # Hierarchy: Large Title -> Subtle Subtitle
         st.markdown(f'<h1 class="hero-title">{st.session_state.ai_mode}</h1>', unsafe_allow_html=True)
-        desc = "Your personalized learning partner for exam prep and research." if st.session_state.ai_mode == "Study Buddy" else "The industrial standard for deep logic and professional intelligence."
+        desc = "Your personalized learning partner for exam prep and research." if st.session_state.ai_mode == "AtlasAI" else "The industrial standard for deep logic and professional intelligence."
         st.markdown(f'<p class="hero-subtitle">{desc}</p>', unsafe_allow_html=True)
         
         # Primary Action
@@ -189,7 +192,7 @@ def render_hero_screen():
             ["🧪 Debug my Python logic", "📝 Generate a mock quiz"]
         ]
         
-        idx = 0 if st.session_state.ai_mode == "LearnAI" else 1
+        idx = 0 if st.session_state.ai_mode == "EchoAI" else 1
         with c1:
             if st.button(prompts[idx][0]):
                 create_thread()
@@ -205,7 +208,7 @@ def render_hero_screen():
         # 2. Preview interaction block
         with st.expander("🔍 See a preview of the response style"):
             st.markdown("""
-            **User:** *How do I optimize a SQL query?* **Nexus AI:** To optimize a SQL query, start by analyzing the Execution Plan. 
+            **User:** *How do I optimize a SQL query?* **Nexa AI:** To optimize a SQL query, start by analyzing the Execution Plan. 
             Ensure your columns are indexed, avoid `SELECT *`, and use `JOIN` instead of subqueries where possible.
             """)
 
@@ -237,9 +240,9 @@ def render_chat_interface():
         st.rerun()
 
     if chat['messages'] and chat['messages'][-1]['role'] == "user":
-        with st.chat_message("assistant", avatar="🎓" if st.session_state.ai_mode == "Study Buddy" else "✨"):
+        with st.chat_message("assistant", avatar="🎓" if st.session_state.ai_mode == "AtlasAI" else "✨"):
             ph = st.empty()
-            if st.session_state.ai_mode == "Study Buddy":
+            if st.session_state.ai_mode == "AtlasAI":
                 res = "I've reviewed your topic. Let's break this down into digestible concepts for your study session. Where should we start?"
             else:
                 res = "Optimizing response for high-performance intelligence. The parameters are set for professional depth. How shall we proceed?"

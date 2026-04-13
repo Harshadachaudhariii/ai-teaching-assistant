@@ -338,7 +338,7 @@ def inject_custom_css():
 def render_navbar():
     nav_col1, nav_col2, nav_col3 = st.columns([2.5, 4.5, 3])
     with nav_col1:
-        st.markdown('<div class="logo-container">⚡ LearnAI</div>', unsafe_allow_html=True)
+        st.markdown('<div class="logo-container">⚡ NexaAI</div>', unsafe_allow_html=True)
     with nav_col2:
         # Keep your exact HTML logic
         st.markdown("""
@@ -397,8 +397,8 @@ def render_hero():
             st.markdown(f"""
             <div class="ui-preview">
                 <div style="border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 25px; display: flex; gap: 25px;">
-                    <a href="/?active_tab=learn" target="_self" style="text-decoration: none; color: #3B82F6; border-bottom: 2px solid #3B82F6; padding-bottom: 10px; font-weight: 600;">LearnAI</a>
-                    <a href="/?active_tab=study" target="_self" style="text-decoration: none; color: #666;">Study Buddy</a>
+                    <a href="/?active_tab=learn" target="_self" style="text-decoration: none; color: #3B82F6; border-bottom: 2px solid #3B82F6; padding-bottom: 10px; font-weight: 600;">EchoAI</a>
+                    <a href="/?active_tab=study" target="_self" style="text-decoration: none; color: #666;">AtlasAI</a>
                 </div>
                 <div style="background: #1A1A1A; padding: 15px; border-radius: 10px; margin-bottom: 15px; width: 75%; font-size: 14px; border: 1px solid #222;">
                     Explain neural networks simply.
@@ -419,8 +419,8 @@ def render_hero():
             st.markdown(f"""
             <div class="ui-preview">
                 <div style="border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 25px; display: flex; gap: 25px;">
-                    <a href="/?active_tab=learn" target="_self" style="text-decoration: none; color: #666;">LearnAI</a>
-                    <a href="/?active_tab=study" target="_self" style="text-decoration: none; color: #3B82F6; border-bottom: 2px solid #3B82F6; padding-bottom: 10px; font-weight: 600;">Study Buddy</a>
+                    <a href="/?active_tab=learn" target="_self" style="text-decoration: none; color: #666;">EchoAI</a>
+                    <a href="/?active_tab=study" target="_self" style="text-decoration: none; color: #3B82F6; border-bottom: 2px solid #3B82F6; padding-bottom: 10px; font-weight: 600;">AtlasAI</a>
                 </div>
                 <div style="background: #1A1A1A; padding: 15px; border-radius: 10px; margin-bottom: 15px; width: 75%; font-size: 14px; border: 1px solid #222;">
                     Help me study CSS Box Model.
