@@ -1,6 +1,5 @@
-# EchoAI
-
 # services/chat_service.py
+# EchoAI Service
 
 from openai import OpenAI
 
@@ -9,21 +8,17 @@ client = OpenAI(
     api_key='ollama',
 )
 
-def generate_chat_response(messages, mode="general"):
-
-    # 🎯 Model selection logic
-    if mode == "general":
-        model = "llama3:latest"
-        temperature = 0.7
-        max_tokens = 500
-
-    elif mode == "fast":
+def generate_chat_response(messages, speed="default"):
+    
+    # 🎯 Speed mode selection
+    if speed == "fast":
         model = "phi3:mini"
         temperature = 0.6
         max_tokens = 300
-
-    else:
-        model = "phi3:mini"
+    else:  # default
+        model = "llama3:latest"
+        temperature = 0.7
+        max_tokens = 500
 
     try:
         stream = client.chat.completions.create(
@@ -44,3 +39,5 @@ def generate_chat_response(messages, mode="general"):
 
     except Exception as e:
         return f"Error generating response: {str(e)}"
+    
+    

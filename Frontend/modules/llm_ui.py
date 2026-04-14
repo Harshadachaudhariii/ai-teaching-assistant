@@ -103,6 +103,14 @@ def render_sidebar():
             ["EchoAI", "AtlasAI"],
             help="EchoAI: General topics | AtlasAI: Personalized learning partner"
         )
+        # In render_sidebar() — only show when EchoAI is active
+        if st.session_state.ai_mode == "EchoAI":
+            speed = st.radio(
+                "Response Speed",
+                ["Default", "Fast"],
+                help="Default: llama3 (smarter) | Fast: phi3:mini (quicker)"
+            )
+        st.session_state.echo_speed = "fast" if speed == "Fast" else "default"
         if mode != st.session_state.ai_mode:
             st.session_state.ai_mode = mode
             create_thread()   # ✅ new chat
