@@ -1,70 +1,28 @@
 # services/rag_service.py
 # atlasAI - RAG (Retrieval-Augmented Generation) Service
-import pandas as pd
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-import joblib
-import requests
+# services/rag_service.py
+# AtlasAI Service
 
-# ✅ Load once (important for performance)
-df = joblib.load('LLM/embeddings.joblib')
+from core.vector_store import search_similar_chunks
+from core.llm_engine import generate_atlas_response
+from utils.logger import get_logger
 
+logger = get_logger(__name__)
 
-def create_embedding(text_list):
-    r = requests.post("http://localhost:11434/api/embed", json={
-        "model": "bge-m3",
-        "input": text_list
-    })
-    return r.json()["embeddings"]
+def generate_rag_response(user_query: str) -> str:
+    logger.info(f"[RAG SERVICE] Query received | query={user_query[:60]}")
 
+    # Step 1: Search similar chunks
+    context_df = search_similar_chunks(user_query, top_k=3)
 
-def inference(prompt):
-    r = requests.post("http://localhost:11434/api/generate", json={
-        "model": "gemma3:1b",
-        "prompt": prompt,
-        "stream": False
-    })
-    return r.json()
+    if context_df is None:
+        logger.warning("[RAG SERVICE] No context found!")
+        return "Sorry, I could not find relevant course content for your question."
 
+    logger.info(f"[RAG SERVICE] Context retrieved | chunks={len(context_df)}")
 
-def generate_rag_response(user_query: str):
-    try:
-        # 🔹 Step 1: Create embedding
-        question_embedding = create_embedding([user_query])[0]
+    # Step 2: Generate response
+    response = generate_atlas_response(context_df, user_query)
 
-        # 🔹 Step 2: Similarity search
-        similarities = cosine_similarity(
-            np.vstack(df['embedding']),
-            [question_embedding]
-        ).flatten()
-
-        top_results = 3
-        max_indx = similarities.argsort()[::-1][:top_results]
-
-        new_df = df.loc[max_indx]
-
-        # 🔹 Step 3: Prompt creation
-        prompt = f"""
-        I am teaching web development using Sigma web development course.
-
-        Here are relevant video chunks:
-        {new_df[["title", "number", "start", "end", "text"]].to_json(orient="records")}
-
-        ---------------------------------
-        Question: "{user_query}"
-
-        Instructions:
-        - Answer in a human-friendly way
-        - Mention video number and timestamp
-        - Guide user to correct video
-        - If unrelated, say you only answer course-related questions
-        """
-
-        # 🔹 Step 4: LLM call
-        response = inference(prompt)["response"]
-
-        return response
-    
-    except Exception as e:
-        return f"RAG Error: {str(e)}"
-
+    logger.info(f"[RAG SERVICE] Response ready | preview={response[:60]}")
+    return response

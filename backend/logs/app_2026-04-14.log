@@ -1,0 +1,281 @@
+2026-04-14 13:45:42 | INFO     | db.database | Connecting to database: sqlite:///./test.db
+2026-04-14 13:45:42 | INFO     | db.database | Database engine created successfully
+2026-04-14 13:45:42 | INFO     | db.database | SessionLocal configured
+2026-04-14 13:45:42 | INFO     | db.base | SQLAlchemy Base initialized
+2026-04-14 13:45:42 | INFO     | core.config | [CONFIG] Database: sqlite:///./test.db
+2026-04-14 13:45:42 | INFO     | core.config | [CONFIG] Ollama: http://localhost:11434
+2026-04-14 13:45:42 | INFO     | core.config | [CONFIG] Settings loaded successfully
+2026-04-14 13:46:26 | INFO     | db.database | Connecting to database: sqlite:///./test.db
+2026-04-14 13:46:26 | INFO     | db.database | Database engine created successfully
+2026-04-14 13:46:26 | INFO     | db.database | SessionLocal configured
+2026-04-14 13:46:26 | INFO     | db.base | SQLAlchemy Base initialized
+2026-04-14 13:46:26 | INFO     | core.config | [CONFIG] Database: sqlite:///./test.db
+2026-04-14 13:46:26 | INFO     | core.config | [CONFIG] Ollama: http://localhost:11434
+2026-04-14 13:46:26 | INFO     | core.config | [CONFIG] Settings loaded successfully
+2026-04-14 13:48:08 | INFO     | db.database | Connecting to database: sqlite:///./test.db
+2026-04-14 13:48:08 | INFO     | db.database | Database engine created successfully
+2026-04-14 13:48:08 | INFO     | db.database | SessionLocal configured
+2026-04-14 13:48:08 | INFO     | db.base | SQLAlchemy Base initialized
+2026-04-14 13:48:08 | INFO     | core.config | [CONFIG] Database: sqlite:///./test.db
+2026-04-14 13:48:08 | INFO     | core.config | [CONFIG] Ollama: http://localhost:11434
+2026-04-14 13:48:08 | INFO     | core.config | [CONFIG] Settings loaded successfully
+2026-04-14 13:48:09 | INFO     | core.llm_engine | [LLM ENGINE] Client initialized at http://localhost:11434
+2026-04-14 13:48:11 | WARNING  | core.embeddings_loader | [EMBEDDINGS] File not found at LLM\embeddings.joblib
+2026-04-14 13:48:11 | INFO     | app.main | [MAIN] Database tables created
+2026-04-14 13:48:11 | INFO     | app.main | [MAIN] CORS middleware added
+2026-04-14 13:48:11 | INFO     | app.main | [MAIN] All routers registered
+2026-04-14 13:48:27 | INFO     | db.database | Connecting to database: sqlite:///./test.db
+2026-04-14 13:48:27 | INFO     | db.database | Database engine created successfully
+2026-04-14 13:48:27 | INFO     | db.database | SessionLocal configured
+2026-04-14 13:48:27 | INFO     | db.base | SQLAlchemy Base initialized
+2026-04-14 13:48:27 | INFO     | core.config | [CONFIG] Database: sqlite:///./test.db
+2026-04-14 13:48:27 | INFO     | core.config | [CONFIG] Ollama: http://localhost:11434
+2026-04-14 13:48:27 | INFO     | core.config | [CONFIG] Settings loaded successfully
+2026-04-14 13:48:28 | INFO     | core.llm_engine | [LLM ENGINE] Client initialized at http://localhost:11434
+2026-04-14 13:48:29 | WARNING  | core.embeddings_loader | [EMBEDDINGS] File not found at LLM\embeddings.joblib
+2026-04-14 13:48:29 | INFO     | app.main | [MAIN] Database tables created
+2026-04-14 13:48:29 | INFO     | app.main | [MAIN] CORS middleware added
+2026-04-14 13:48:29 | INFO     | app.main | [MAIN] All routers registered
+2026-04-14 13:48:29 | INFO     | app.main | [MAIN] 🚀 Server started successfully
+2026-04-14 13:48:29 | INFO     | app.main | [MAIN] EchoAI  → /chat
+2026-04-14 13:48:29 | INFO     | app.main | [MAIN] AtlasAI → /rag
+2026-04-14 13:48:29 | INFO     | app.main | [MAIN] Auth    → /auth
+2026-04-14 13:48:29 | INFO     | app.main | [MAIN] User    → /user
+2026-04-14 13:48:29 | INFO     | app.main | [MAIN] Docs    → /docs
+2026-04-14 13:48:38 | INFO     | app.main | [MAIN] Server shutting down...
+2026-04-14 13:48:51 | INFO     | db.database | Connecting to database: sqlite:///./test.db
+2026-04-14 13:48:51 | INFO     | db.database | Database engine created successfully
+2026-04-14 13:48:51 | INFO     | db.database | SessionLocal configured
+2026-04-14 13:48:51 | INFO     | db.base | SQLAlchemy Base initialized
+2026-04-14 13:48:51 | INFO     | core.config | [CONFIG] Database: sqlite:///./test.db
+2026-04-14 13:48:51 | INFO     | core.config | [CONFIG] Ollama: http://localhost:11434
+2026-04-14 13:48:51 | INFO     | core.config | [CONFIG] Settings loaded successfully
+2026-04-14 13:48:52 | INFO     | core.llm_engine | [LLM ENGINE] Client initialized at http://localhost:11434
+2026-04-14 13:48:53 | WARNING  | core.embeddings_loader | [EMBEDDINGS] File not found at LLM\embeddings.joblib
+2026-04-14 13:48:53 | INFO     | app.main | [MAIN] Database tables created
+2026-04-14 13:48:53 | INFO     | app.main | [MAIN] CORS middleware added
+2026-04-14 13:48:53 | INFO     | app.main | [MAIN] All routers registered
+2026-04-14 13:48:53 | INFO     | app.main | [MAIN] 🚀 Server started successfully
+2026-04-14 13:48:53 | INFO     | app.main | [MAIN] EchoAI  → /chat
+2026-04-14 13:48:53 | INFO     | app.main | [MAIN] AtlasAI → /rag
+2026-04-14 13:48:53 | INFO     | app.main | [MAIN] Auth    → /auth
+2026-04-14 13:48:53 | INFO     | app.main | [MAIN] User    → /user
+2026-04-14 13:48:53 | INFO     | app.main | [MAIN] Docs    → /docs
+2026-04-14 13:49:13 | INFO     | app.main | [MAIN] Root endpoint hit
+2026-04-14 13:50:45 | INFO     | app.main | [MAIN] Root endpoint hit
+2026-04-14 13:52:59 | INFO     | app.main | [MAIN] Server shutting down...
+2026-04-14 13:53:00 | INFO     | db.database | Connecting to database: sqlite:///./test.db
+2026-04-14 13:53:00 | INFO     | db.database | Database engine created successfully
+2026-04-14 13:53:00 | INFO     | db.database | SessionLocal configured
+2026-04-14 13:53:00 | INFO     | db.base | SQLAlchemy Base initialized
+2026-04-14 13:53:00 | INFO     | core.config | [CONFIG] Database: sqlite:///./test.db
+2026-04-14 13:53:00 | INFO     | core.config | [CONFIG] Ollama: http://localhost:11434
+2026-04-14 13:53:00 | INFO     | core.config | [CONFIG] Settings loaded successfully
+2026-04-14 13:53:01 | INFO     | core.llm_engine | [LLM ENGINE] Client initialized at http://localhost:11434
+2026-04-14 13:53:02 | INFO     | core.embeddings_loader | [EMBEDDINGS] Looking for embeddings at: D:\data scientists\Ai Teaching Assistance\ai-teaching-assistant\LLM\embeddings.joblib
+2026-04-14 13:53:02 | INFO     | core.embeddings_loader | [EMBEDDINGS] Loaded successfully | rows=7252
+2026-04-14 13:53:02 | INFO     | app.main | [MAIN] Database tables created
+2026-04-14 13:53:02 | INFO     | app.main | [MAIN] CORS middleware added
+2026-04-14 13:53:02 | INFO     | app.main | [MAIN] All routers registered
+2026-04-14 13:53:02 | INFO     | app.main | [MAIN] 🚀 Server started successfully
+2026-04-14 13:53:02 | INFO     | app.main | [MAIN] EchoAI  → /chat
+2026-04-14 13:53:02 | INFO     | app.main | [MAIN] AtlasAI → /rag
+2026-04-14 13:53:02 | INFO     | app.main | [MAIN] Auth    → /auth
+2026-04-14 13:53:02 | INFO     | app.main | [MAIN] User    → /user
+2026-04-14 13:53:02 | INFO     | app.main | [MAIN] Docs    → /docs
+2026-04-14 13:54:43 | INFO     | db.database | Database session opened
+2026-04-14 13:54:43 | INFO     | api.auth | [AUTH API] Register request | email=alex@gmail.com
+2026-04-14 13:54:43 | INFO     | services.auth_service | [AUTH SERVICE] Register attempt | email=alex@gmail.com
+2026-04-14 13:54:43 | INFO     | core.security | [SECURITY] Hashing password
+2026-04-14 13:54:43 | INFO     | db.database | Database session closed
+2026-04-14 13:55:46 | INFO     | app.main | [MAIN] Server shutting down...
+2026-04-14 13:56:48 | INFO     | db.database | Connecting to database: sqlite:///./test.db
+2026-04-14 13:56:48 | INFO     | db.database | Database engine created successfully
+2026-04-14 13:56:48 | INFO     | db.database | SessionLocal configured
+2026-04-14 13:56:48 | INFO     | db.base | SQLAlchemy Base initialized
+2026-04-14 13:56:49 | INFO     | core.config | [CONFIG] Database: sqlite:///./test.db
+2026-04-14 13:56:49 | INFO     | core.config | [CONFIG] Ollama: http://localhost:11434
+2026-04-14 13:56:49 | INFO     | core.config | [CONFIG] Settings loaded successfully
+2026-04-14 13:56:49 | INFO     | core.llm_engine | [LLM ENGINE] Client initialized at http://localhost:11434
+2026-04-14 13:56:51 | INFO     | core.embeddings_loader | [EMBEDDINGS] Looking for embeddings at: D:\data scientists\Ai Teaching Assistance\ai-teaching-assistant\LLM\embeddings.joblib
+2026-04-14 13:56:51 | INFO     | core.embeddings_loader | [EMBEDDINGS] Loaded successfully | rows=7252
+2026-04-14 13:56:51 | INFO     | app.main | [MAIN] Database tables created
+2026-04-14 13:56:51 | INFO     | app.main | [MAIN] CORS middleware added
+2026-04-14 13:56:51 | INFO     | app.main | [MAIN] All routers registered
+2026-04-14 13:56:51 | INFO     | app.main | [MAIN] 🚀 Server started successfully
+2026-04-14 13:56:51 | INFO     | app.main | [MAIN] EchoAI  → /chat
+2026-04-14 13:56:51 | INFO     | app.main | [MAIN] AtlasAI → /rag
+2026-04-14 13:56:51 | INFO     | app.main | [MAIN] Auth    → /auth
+2026-04-14 13:56:51 | INFO     | app.main | [MAIN] User    → /user
+2026-04-14 13:56:51 | INFO     | app.main | [MAIN] Docs    → /docs
+2026-04-14 13:56:53 | INFO     | app.main | [MAIN] Root endpoint hit
+2026-04-14 13:57:35 | INFO     | db.database | Database session opened
+2026-04-14 13:57:35 | INFO     | api.auth | [AUTH API] Register request | email=test@gmail.com
+2026-04-14 13:57:35 | INFO     | services.auth_service | [AUTH SERVICE] Register attempt | email=test@gmail.com
+2026-04-14 13:57:35 | INFO     | core.security | [SECURITY] Hashing password
+2026-04-14 13:57:36 | INFO     | services.auth_service | [AUTH SERVICE] User registered successfully | email=test@gmail.com
+2026-04-14 13:57:36 | INFO     | api.auth | [AUTH API] Register success | user_id=1
+2026-04-14 13:57:36 | INFO     | db.database | Database session closed
+2026-04-14 13:58:15 | INFO     | db.database | Database session opened
+2026-04-14 13:58:15 | INFO     | api.auth | [AUTH API] Login request | email=test@gmail.com
+2026-04-14 13:58:15 | INFO     | services.auth_service | [AUTH SERVICE] Login attempt | email=test@gmail.com
+2026-04-14 13:58:15 | INFO     | core.security | [SECURITY] Verifying password
+2026-04-14 13:58:15 | INFO     | core.security | [SECURITY] Access token created for: {'user_id': 1}
+2026-04-14 13:58:15 | INFO     | services.auth_service | [AUTH SERVICE] Login successful | email=test@gmail.com
+2026-04-14 13:58:15 | INFO     | api.auth | [AUTH API] Login success | user_id=1
+2026-04-14 13:58:15 | INFO     | db.database | Database session closed
+2026-04-14 14:01:19 | INFO     | app.main | [MAIN] Server shutting down...
+2026-04-14 14:19:21 | INFO     | db.database | Connecting to database: sqlite:///./test.db
+2026-04-14 14:19:21 | INFO     | db.database | Database engine created successfully
+2026-04-14 14:19:21 | INFO     | db.database | SessionLocal configured
+2026-04-14 14:19:21 | INFO     | db.base | SQLAlchemy Base initialized
+2026-04-14 14:19:22 | INFO     | core.config | [CONFIG] Database: sqlite:///./test.db
+2026-04-14 14:19:22 | INFO     | core.config | [CONFIG] Ollama: http://localhost:11434
+2026-04-14 14:19:22 | INFO     | core.config | [CONFIG] Settings loaded successfully
+2026-04-14 14:19:24 | INFO     | core.llm_engine | [LLM ENGINE] Client initialized at http://localhost:11434
+2026-04-14 14:19:27 | INFO     | core.embeddings_loader | [EMBEDDINGS] Looking for embeddings at: D:\data scientists\Ai Teaching Assistance\ai-teaching-assistant\LLM\embeddings.joblib
+2026-04-14 14:19:28 | INFO     | core.embeddings_loader | [EMBEDDINGS] Loaded successfully | rows=7252
+2026-04-14 14:19:28 | INFO     | app.main | [MAIN] Database tables created
+2026-04-14 14:19:28 | INFO     | app.main | [MAIN] CORS middleware added
+2026-04-14 14:19:28 | INFO     | app.main | [MAIN] All routers registered
+2026-04-14 14:19:28 | INFO     | app.main | [MAIN] 🚀 Server started successfully
+2026-04-14 14:19:28 | INFO     | app.main | [MAIN] EchoAI  → /chat
+2026-04-14 14:19:28 | INFO     | app.main | [MAIN] AtlasAI → /rag
+2026-04-14 14:19:28 | INFO     | app.main | [MAIN] Auth    → /auth
+2026-04-14 14:19:28 | INFO     | app.main | [MAIN] User    → /user
+2026-04-14 14:19:28 | INFO     | app.main | [MAIN] Docs    → /docs
+2026-04-14 14:19:28 | INFO     | app.main | [MAIN] Root endpoint hit
+2026-04-14 14:21:10 | INFO     | db.database | Database session opened
+2026-04-14 14:21:10 | INFO     | api.auth | [AUTH API] Register request | email=test@gmail.com
+2026-04-14 14:21:10 | INFO     | services.auth_service | [AUTH SERVICE] Register attempt | email=test@gmail.com
+2026-04-14 14:21:10 | WARNING  | services.auth_service | [AUTH SERVICE] User already exists | email=test@gmail.com
+2026-04-14 14:21:10 | WARNING  | api.auth | [AUTH API] Register failed | User already exists
+2026-04-14 14:21:10 | INFO     | db.database | Database session closed
+2026-04-14 14:22:46 | INFO     | db.database | Database session opened
+2026-04-14 14:22:46 | INFO     | api.auth | [AUTH API] Register request | email=test@gmail.com
+2026-04-14 14:22:46 | INFO     | services.auth_service | [AUTH SERVICE] Register attempt | email=test@gmail.com
+2026-04-14 14:22:46 | WARNING  | services.auth_service | [AUTH SERVICE] User already exists | email=test@gmail.com
+2026-04-14 14:22:46 | WARNING  | api.auth | [AUTH API] Register failed | User already exists
+2026-04-14 14:22:46 | INFO     | db.database | Database session closed
+2026-04-14 14:24:16 | INFO     | db.database | Database session opened
+2026-04-14 14:24:16 | INFO     | api.auth | [AUTH API] Login request | email=test@gmail.com
+2026-04-14 14:24:16 | INFO     | services.auth_service | [AUTH SERVICE] Login attempt | email=test@gmail.com
+2026-04-14 14:24:16 | INFO     | core.security | [SECURITY] Verifying password
+2026-04-14 14:24:16 | INFO     | core.security | [SECURITY] Access token created for: {'user_id': 1}
+2026-04-14 14:24:16 | INFO     | services.auth_service | [AUTH SERVICE] Login successful | email=test@gmail.com
+2026-04-14 14:24:16 | INFO     | api.auth | [AUTH API] Login success | user_id=1
+2026-04-14 14:24:16 | INFO     | db.database | Database session closed
+2026-04-14 14:25:28 | INFO     | db.database | Database session opened
+2026-04-14 14:25:28 | INFO     | db.database | Database session closed
+2026-04-14 14:27:20 | INFO     | db.database | Database session opened
+2026-04-14 14:27:20 | INFO     | api.auth | [AUTH API] Login request | email=test@gmail.com
+2026-04-14 14:27:20 | INFO     | services.auth_service | [AUTH SERVICE] Login attempt | email=test@gmail.com
+2026-04-14 14:27:20 | INFO     | core.security | [SECURITY] Verifying password
+2026-04-14 14:27:20 | INFO     | core.security | [SECURITY] Access token created for: {'user_id': 1}
+2026-04-14 14:27:20 | INFO     | services.auth_service | [AUTH SERVICE] Login successful | email=test@gmail.com
+2026-04-14 14:27:20 | INFO     | api.auth | [AUTH API] Login success | user_id=1
+2026-04-14 14:27:20 | INFO     | db.database | Database session closed
+2026-04-14 14:40:03 | INFO     | app.main | [MAIN] Server shutting down...
+2026-04-14 14:40:07 | INFO     | db.database | Connecting to database: sqlite:///./test.db
+2026-04-14 14:40:07 | INFO     | db.database | Database engine created successfully
+2026-04-14 14:40:07 | INFO     | db.database | SessionLocal configured
+2026-04-14 14:40:07 | INFO     | db.base | SQLAlchemy Base initialized
+2026-04-14 14:40:08 | INFO     | core.config | [CONFIG] Database: sqlite:///./test.db
+2026-04-14 14:40:08 | INFO     | core.config | [CONFIG] Ollama: http://localhost:11434
+2026-04-14 14:40:08 | INFO     | core.config | [CONFIG] Settings loaded successfully
+2026-04-14 14:41:11 | INFO     | db.database | Connecting to database: sqlite:///./test.db
+2026-04-14 14:41:11 | INFO     | db.database | Database engine created successfully
+2026-04-14 14:41:11 | INFO     | db.database | SessionLocal configured
+2026-04-14 14:41:11 | INFO     | db.base | SQLAlchemy Base initialized
+2026-04-14 14:41:11 | INFO     | core.config | [CONFIG] Database: sqlite:///./test.db
+2026-04-14 14:41:11 | INFO     | core.config | [CONFIG] Ollama: http://localhost:11434
+2026-04-14 14:41:11 | INFO     | core.config | [CONFIG] Settings loaded successfully
+2026-04-14 14:41:55 | INFO     | db.database | Connecting to database: sqlite:///./test.db
+2026-04-14 14:41:55 | INFO     | db.database | Database engine created successfully
+2026-04-14 14:41:55 | INFO     | db.database | SessionLocal configured
+2026-04-14 14:41:55 | INFO     | db.base | SQLAlchemy Base initialized
+2026-04-14 14:41:55 | INFO     | core.config | [CONFIG] Database: sqlite:///./test.db
+2026-04-14 14:41:55 | INFO     | core.config | [CONFIG] Ollama: http://localhost:11434
+2026-04-14 14:41:55 | INFO     | core.config | [CONFIG] Settings loaded successfully
+2026-04-14 14:41:57 | INFO     | core.llm_engine | [LLM ENGINE] Client initialized at http://localhost:11434
+2026-04-14 14:42:00 | INFO     | core.embeddings_loader | [EMBEDDINGS] Looking for embeddings at: D:\data scientists\Ai Teaching Assistance\ai-teaching-assistant\LLM\embeddings.joblib
+2026-04-14 14:42:01 | INFO     | core.embeddings_loader | [EMBEDDINGS] Loaded successfully | rows=7252
+2026-04-14 14:42:01 | INFO     | app.main | [MAIN] Database tables created
+2026-04-14 14:42:01 | INFO     | app.main | [MAIN] CORS middleware added
+2026-04-14 14:42:01 | INFO     | app.main | [MAIN] All routers registered
+2026-04-14 14:42:01 | INFO     | app.main | [MAIN] 🚀 Server started successfully
+2026-04-14 14:42:01 | INFO     | app.main | [MAIN] EchoAI  → /chat
+2026-04-14 14:42:01 | INFO     | app.main | [MAIN] AtlasAI → /rag
+2026-04-14 14:42:01 | INFO     | app.main | [MAIN] Auth    → /auth
+2026-04-14 14:42:01 | INFO     | app.main | [MAIN] User    → /user
+2026-04-14 14:42:01 | INFO     | app.main | [MAIN] Docs    → /docs
+2026-04-14 14:43:40 | INFO     | db.database | Database session opened
+2026-04-14 14:43:40 | INFO     | api.auth | [AUTH API] Login form request | email=test@gmail.com
+2026-04-14 14:43:40 | INFO     | services.auth_service | [AUTH SERVICE] Login attempt | email=test@gmail.com
+2026-04-14 14:43:40 | INFO     | core.security | [SECURITY] Verifying password
+2026-04-14 14:43:41 | INFO     | core.security | [SECURITY] Access token created for: {'user_id': 1}
+2026-04-14 14:43:41 | INFO     | services.auth_service | [AUTH SERVICE] Login successful | email=test@gmail.com
+2026-04-14 14:43:41 | INFO     | api.auth | [AUTH API] Login success | user_id=1
+2026-04-14 14:43:41 | INFO     | db.database | Database session closed
+2026-04-14 14:46:35 | INFO     | db.database | Database session opened
+2026-04-14 14:46:35 | INFO     | dependencies.auth | [AUTH DEP] Verifying token...
+2026-04-14 14:46:35 | INFO     | core.security | [SECURITY] Token decoded successfully
+2026-04-14 14:46:35 | INFO     | dependencies.auth | [AUTH DEP] Token valid | user_id=1 email=test@gmail.com
+2026-04-14 14:46:35 | INFO     | api.chat | [CHAT API] Request | user_id=1 | speed=default | messages=1
+2026-04-14 14:46:35 | INFO     | services.chat_service | [CHAT SERVICE] Request | speed=default | messages=1
+2026-04-14 14:46:35 | INFO     | core.llm_engine | [ECHOAI] Model=llama3:latest | Speed=default | Messages=1
+2026-04-14 14:48:55 | INFO     | db.database | Connecting to database: sqlite:///./test.db
+2026-04-14 14:48:55 | INFO     | db.database | Database engine created successfully
+2026-04-14 14:48:55 | INFO     | db.database | SessionLocal configured
+2026-04-14 14:48:55 | INFO     | db.base | SQLAlchemy Base initialized
+2026-04-14 14:48:55 | INFO     | core.config | [CONFIG] Database: sqlite:///./test.db
+2026-04-14 14:48:55 | INFO     | core.config | [CONFIG] Ollama: http://localhost:11434
+2026-04-14 14:48:55 | INFO     | core.config | [CONFIG] Settings loaded successfully
+2026-04-14 14:48:57 | INFO     | core.llm_engine | [LLM ENGINE] Client initialized at http://localhost:11434
+2026-04-14 14:49:00 | INFO     | core.embeddings_loader | [EMBEDDINGS] Looking for embeddings at: D:\data scientists\Ai Teaching Assistance\ai-teaching-assistant\LLM\embeddings.joblib
+2026-04-14 14:49:01 | INFO     | core.embeddings_loader | [EMBEDDINGS] Loaded successfully | rows=7252
+2026-04-14 14:49:01 | INFO     | app.main | [MAIN] Database tables created
+2026-04-14 14:49:01 | INFO     | app.main | [MAIN] CORS middleware added
+2026-04-14 14:49:01 | INFO     | app.main | [MAIN] All routers registered
+2026-04-14 14:49:01 | INFO     | app.main | [MAIN] 🚀 Server started successfully
+2026-04-14 14:49:01 | INFO     | app.main | [MAIN] EchoAI  → /chat
+2026-04-14 14:49:01 | INFO     | app.main | [MAIN] AtlasAI → /rag
+2026-04-14 14:49:01 | INFO     | app.main | [MAIN] Auth    → /auth
+2026-04-14 14:49:01 | INFO     | app.main | [MAIN] User    → /user
+2026-04-14 14:49:02 | INFO     | app.main | [MAIN] Docs    → /docs
+2026-04-14 14:49:02 | INFO     | app.main | [MAIN] Root endpoint hit
+2026-04-14 14:49:14 | INFO     | db.database | Database session opened
+2026-04-14 14:49:14 | INFO     | api.auth | [AUTH API] Login form request | email=test@gmail.com
+2026-04-14 14:49:14 | INFO     | services.auth_service | [AUTH SERVICE] Login attempt | email=test@gmail.com
+2026-04-14 14:49:14 | INFO     | core.security | [SECURITY] Verifying password
+2026-04-14 14:49:14 | INFO     | core.security | [SECURITY] Access token created for: {'user_id': 1}
+2026-04-14 14:49:14 | INFO     | services.auth_service | [AUTH SERVICE] Login successful | email=test@gmail.com
+2026-04-14 14:49:14 | INFO     | api.auth | [AUTH API] Login success | user_id=1
+2026-04-14 14:49:14 | INFO     | db.database | Database session closed
+2026-04-14 14:49:59 | INFO     | db.database | Database session opened
+2026-04-14 14:49:59 | INFO     | dependencies.auth | [AUTH DEP] Verifying token...
+2026-04-14 14:49:59 | INFO     | core.security | [SECURITY] Token decoded successfully
+2026-04-14 14:49:59 | INFO     | dependencies.auth | [AUTH DEP] Token valid | user_id=1 email=test@gmail.com
+2026-04-14 14:49:59 | INFO     | api.chat | [CHAT API] Request | user_id=1 | speed=default | messages=1
+2026-04-14 14:49:59 | INFO     | services.chat_service | [CHAT SERVICE] Request | speed=default | messages=1
+2026-04-14 14:49:59 | INFO     | core.llm_engine | [ECHOAI] Model=llama3:latest | Speed=default | Messages=1
+2026-04-14 14:52:47 | INFO     | core.llm_engine | [ECHOAI] Response generated | preview=Python is a high-level, interpreted programming language tha
+2026-04-14 14:52:47 | INFO     | services.chat_service | [CHAT SERVICE] Response ready | preview=Python is a high-level, interpreted programming language tha
+2026-04-14 14:52:47 | INFO     | api.chat | [CHAT API] Response ready | user_id=1 | preview=Python is a high-level, interpreted programming language tha
+2026-04-14 14:52:47 | INFO     | db.database | Database session closed
+2026-04-14 14:54:35 | INFO     | db.database | Database session opened
+2026-04-14 14:54:35 | INFO     | dependencies.auth | [AUTH DEP] Verifying token...
+2026-04-14 14:54:35 | INFO     | core.security | [SECURITY] Token decoded successfully
+2026-04-14 14:54:35 | INFO     | dependencies.auth | [AUTH DEP] Token valid | user_id=1 email=test@gmail.com
+2026-04-14 14:54:35 | INFO     | api.rag | [RAG API] Request | user_id=1 | query=where is CSS taught?
+2026-04-14 14:54:35 | INFO     | services.rag_service | [RAG SERVICE] Query received | query=where is CSS taught?
+2026-04-14 14:54:35 | INFO     | core.vector_store | [VECTOR STORE] Creating embedding for: where is CSS taught?
+2026-04-14 14:54:46 | INFO     | core.vector_store | [VECTOR STORE] Embedding created successfully
+2026-04-14 14:54:49 | INFO     | core.vector_store | [VECTOR STORE] Top 3 chunks retrieved
+2026-04-14 14:54:49 | INFO     | services.rag_service | [RAG SERVICE] Context retrieved | chunks=3
+2026-04-14 14:54:49 | INFO     | core.llm_engine | [ATLASAI] Sending RAG prompt | query=where is CSS taught?
+2026-04-14 14:55:03 | INFO     | core.llm_engine | [ATLASAI] Response generated | preview=CSS is taught in video number 14, starting at timestamp 48.5
+2026-04-14 14:55:03 | INFO     | services.rag_service | [RAG SERVICE] Response ready | preview=CSS is taught in video number 14, starting at timestamp 48.5
+2026-04-14 14:55:03 | INFO     | api.rag | [RAG API] Response ready | user_id=1 | preview=CSS is taught in video number 14, starting at timestamp 48.5
+2026-04-14 14:55:03 | INFO     | db.database | Database session closed
+2026-04-14 14:56:47 | INFO     | app.main | [MAIN] Server shutting down...

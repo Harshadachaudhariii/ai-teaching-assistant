@@ -1,0 +1,29 @@
+# -------------------- WEB FRAMEWORK --------------------
+fastapi
+uvicorn[standard]
+
+# -------------------- DATABASE --------------------
+sqlalchemy
+
+# -------------------- AUTHENTICATION --------------------
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt
+python-multipart
+# -------------------- SETTINGS & ENV --------------------
+pydantic[email]
+pydantic-settings
+python-dotenv
+
+# -------------------- LLM & AI --------------------
+openai
+requests
+
+# -------------------- RAG & EMBEDDINGS --------------------
+pandas
+numpy
+scikit-learn
+joblib
+
+# -------------------- FRONTEND --------------------
+streamlit

@@ -1,43 +1,18 @@
 # services/chat_service.py
 # EchoAI Service
 
-from openai import OpenAI
+# services/chat_service.py
+# EchoAI Service
 
-client = OpenAI(
-    base_url='http://localhost:11434/v1',
-    api_key='ollama',
-)
+from core.llm_engine import generate_echo_response
+from utils.logger import get_logger
 
-def generate_chat_response(messages, speed="default"):
-    
-    # 🎯 Speed mode selection
-    if speed == "fast":
-        model = "phi3:mini"
-        temperature = 0.6
-        max_tokens = 300
-    else:  # default
-        model = "llama3:latest"
-        temperature = 0.7
-        max_tokens = 500
+logger = get_logger(__name__)
 
-    try:
-        stream = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            stream=True
-        )
+def generate_chat_response(messages: list, speed: str = "default") -> str:
+    logger.info(f"[CHAT SERVICE] Request | speed={speed} | messages={len(messages)}")
 
-        full_response = ""
-        for chunk in stream:
-            delta = chunk.choices[0].delta
-            if delta and delta.content:
-                full_response += delta.content
+    response = generate_echo_response(messages, speed)
 
-        return full_response
-
-    except Exception as e:
-        return f"Error generating response: {str(e)}"
-    
-    
+    logger.info(f"[CHAT SERVICE] Response ready | preview={response[:60]}")
+    return response
