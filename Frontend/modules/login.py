@@ -1,21 +1,30 @@
+# modules/login.py
+
 import streamlit as st
-from modules.email_reset_pass import render_forgot_password_flow
+import requests
+from email_reset_pass import render_forgot_password_flow
+
 # --- 1. CONFIGURATION & STATE ---
 def init_auth_state():
-    # store reset tokens
     if "reset_tokens" not in st.session_state:
         st.session_state.reset_tokens = {}
-    # 1. Navigation Logic
     if "page" not in st.session_state:
         st.session_state.page = "login"
-    if "users" not in st.session_state:
-        st.session_state.users = {}
+    if "token" not in st.session_state:
+        st.session_state.token = None
+    if "user" not in st.session_state:
+        st.session_state.user = {}
+    if "profile_data" not in st.session_state:
+        st.session_state.profile_data = {
+            "name": "",
+            "email": ""
+        }
 
 def go_to(page_name):
     st.session_state.page = page_name
     st.rerun()
 
-# --- 2. UI STYLES ---
+# --- 2. UI STYLES --- (unchanged)
 def inject_auth_styles():
     st.markdown("""
         <style>
@@ -28,8 +37,6 @@ def inject_auth_styles():
             width: 100%; 
             margin: auto;
         }
-
-        /* Primary button base */
         .stButton>button[kind="primary"],
         div[data-testid^="stButton"] button[kind="primary"] {
             width: 200px;
@@ -39,15 +46,12 @@ def inject_auth_styles():
             color: white !important;
             border: 2px solid #3b82f6 !important;
         }
-        /* Primary -> text becomes blue on hover */
         .stButton>button[kind="primary"]:hover,
         div[data-testid^="stButton"] button[kind="primary"]:hover {
             color: #0056b3 !important;
             background-color: white !important;
             border: 2px solid #3b82f6 !important;
         }
-
-        /* Link-style / tertiary buttons: cover multiple DOM shapes (button, span, p) */
         div[data-testid="stBaseButton-tertiary"] button,
         div[data-testid="stBaseButton-tertiary"] button span,
         div[data-testid="stBaseButton-tertiary"] button p,
@@ -60,8 +64,6 @@ def inject_auth_styles():
             box-shadow: none !important;
             padding: 0 !important;
         }
-
-        /* Hover/focus for tertiary -> blue text (override Streamlit red) */
         div[data-testid="stBaseButton-tertiary"] button:hover,
         div[data-testid="stBaseButton-tertiary"] button:hover span,
         div[data-testid="stBaseButton-tertiary"] button:hover p,
@@ -75,14 +77,11 @@ def inject_auth_styles():
             border: none !important;
             box-shadow: none !important;
         }
-
-        /* Remove Streamlit red focus/outline */
         div[data-testid^="stButton"] button:focus,
         div[data-testid="stBaseButton-tertiary"] button:focus {
             outline: none !important;
             box-shadow: none !important;
         }
-
         .forgot-password-container {
             display: flex;
             justify-content: flex-end;
@@ -91,8 +90,6 @@ def inject_auth_styles():
             margin-right: 50px !important;
             color: #3b82f6 !important;
         }
-
-        /* The container for the "New here?" row */
         .inline-row {
             display: flex;
             flex-direction: row;
@@ -100,35 +97,28 @@ def inject_auth_styles():
             gap: 5px;
             margin-top: -1px;
         }
-
         .inline-row div[data-testid="stButton"] {
             width: auto !important;
             display: inline-block !important;
         }
-
         .inline-row div[data-testid="stButton"] p {
             margin: 0 !important;
             line-height: 1 !important;
         }
-
         body {
             background: radial-gradient(circle at top, #0a0f1f, #000000);
         }
-
         section[data-testid="stMain"] > div {
             background: radial-gradient(circle, rgba(29, 18, 227,0.09) 0%, transparent 70%);
         }
-
         .block-container {
             padding-top: 1rem !important;
             padding-bottom: 0rem !important;
         }
-
         html, body, [data-testid="stAppViewContainer"] {
             height: 100vh;
             overflow: hidden;
         }
-
         section[data-testid="stMain"] > div {
             display: flex;
             justify-content: center;
@@ -143,7 +133,6 @@ def render_auth_system():
     init_auth_state()
     inject_auth_styles()
 
-    # Layout (1:4:1)
     _, col, _ = st.columns([1, 4, 1])
 
     with col:
@@ -158,27 +147,62 @@ def render_auth_system():
             """, unsafe_allow_html=True)
             st.title("Welcome Back")
             st.caption("Continue your learning journey with AI assistance.")
-            
+
             with st.container(border=True):
                 email = st.text_input("Email Address", placeholder="name@company.com")
                 password = st.text_input("Password", type="password", placeholder="••••••••")
-                
-                # Login and Forgot Password in the SAME ROW
+
                 btn_col1, btn_col2 = st.columns([1, 1])
                 with btn_col1:
                     if st.button("Log In", type="primary"):
-                        if email in st.session_state.users:
-                            if st.session_state.users[email]["password"] == password:
-                                user_record = st.session_state.users[email]
-                                st.session_state.profile_data["name"] = user_record["name"]
-                                st.session_state.profile_data["email"] = email
-                                st.success("Login successful!")
-                                st.session_state.page = "llm_ui"  
-                                st.rerun()
-                            else:
-                                st.error("Wrong password.")
+                        if not email or not password:
+                            st.warning("Please enter email and password.")
                         else:
-                            st.error("User not found. Please register.")
+                            try:
+                                # ✅ Step 1: Login
+                                res = requests.post(
+                                    "http://localhost:8000/auth/login",
+                                    json={"email": email, "password": password},
+                                    timeout=5
+                                )
+
+                                if res.status_code == 200:
+                                    data = res.json()
+                                    token = data.get("access_token")
+
+                                    if not token:
+                                        st.error("Login failed: No token received")
+                                    else:
+                                        # ✅ Step 2: Save token
+                                        st.session_state.token = token
+
+                                        # ✅ Step 3: Fetch user info
+                                        me_res = requests.get(
+                                            "http://localhost:8000/auth/me",
+                                            headers={"Authorization": f"Bearer {token}"},
+                                            timeout=5
+                                        )
+
+                                        if me_res.status_code == 200:
+                                            user_data = me_res.json()
+                                            st.session_state.user = user_data
+                                            st.session_state.profile_data["name"] = user_data.get("name", "")
+                                            st.session_state.profile_data["email"] = user_data.get("email", "")
+
+                                        st.success("Login successful!")
+                                        go_to("llm_ui")
+                                else:
+                                    try:
+                                        err = res.json().get("detail", "Login failed")
+                                    except:
+                                        err = "Login failed (server error)"
+                                    st.error(err)
+
+                            except requests.exceptions.Timeout:
+                                st.error("Server timeout. Try again.")
+                            except Exception as e:
+                                st.error(f"Backend error: {e}")
+
                 with btn_col2:
                     st.markdown('<div class="forgot-password-container">', unsafe_allow_html=True)
                     if st.button("Forgot Password?", type="tertiary", key="forgot_pass"):
@@ -206,14 +230,29 @@ def render_auth_system():
                     elif password != confirm_password:
                         st.error("Passwords do not match.")
                     else:
-                        st.session_state.users[email] = {
-                            "name": full_name,
-                            "password": password
-                        }
-                        st.session_state.profile_data["name"] = full_name
-                        st.session_state.profile_data["email"] = email
-                        st.success("Account created successfully!")
-                        st.info("Please log in with your new credentials.")
+                        try:
+                            # ✅ Register API call
+                            res = requests.post(
+                                "http://localhost:8000/auth/register",
+                                json={
+                                    "name": full_name,
+                                    "email": email,
+                                    "password": password
+                                },
+                                timeout=5
+                            )
+
+                            if res.status_code == 200:
+                                st.success("Account created successfully!")
+                                st.info("Please log in with your credentials.")
+                                go_to("login")
+                            else:
+                                st.error(res.json().get("detail", "Registration failed"))
+
+                        except requests.exceptions.Timeout:
+                            st.error("Server timeout. Try again.")
+                        except Exception as e:
+                            st.error(f"Backend error: {e}")
 
             st.markdown('<div class="inline-row"><span>Already have an account?</span>', unsafe_allow_html=True)
             if st.button("Log in", type="tertiary", key="back_reg"):
@@ -221,7 +260,7 @@ def render_auth_system():
             st.markdown('</div>', unsafe_allow_html=True)
 
         elif st.session_state.page == "reset":
-           render_forgot_password_flow()
+            render_forgot_password_flow()
 
 # --- 4. EXECUTION ---
 if __name__ == "__main__":

@@ -81,6 +81,9 @@ def init_store():
     if "chats" not in st.session_state: st.session_state.chats = {}  
     if "active_id" not in st.session_state: st.session_state.active_id = None
     if "ai_mode" not in st.session_state: st.session_state.ai_mode = "EchoAI"
+    # Add inside init_store()
+    if "echo_speed" not in st.session_state:
+        st.session_state.echo_speed = "default"
 
 def create_thread():
     cid = str(uuid.uuid4())
@@ -108,9 +111,9 @@ def render_sidebar():
             speed = st.radio(
                 "Response Speed",
                 ["Default", "Fast"],
-                help="Default: llama3 (smarter) | Fast: phi3:mini (quicker)"
+                index=0 if st.session_state.echo_speed == "default" else 1
             )
-        st.session_state.echo_speed = "fast" if speed == "Fast" else "default"
+            st.session_state.echo_speed = "fast" if speed == "Fast" else "default"
         if mode != st.session_state.ai_mode:
             st.session_state.ai_mode = mode
             create_thread()   # ✅ new chat
