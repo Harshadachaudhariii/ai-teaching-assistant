@@ -2,6 +2,7 @@ import streamlit as st
 import time
 import uuid
 from datetime import datetime
+import requests
 
 # --- 1. ARCHITECTURAL DESIGN SYSTEM (CSS) ---
 def inject_ui_styles():
@@ -189,7 +190,7 @@ def render_hero_screen():
         st.markdown(f'<p class="hero-subtitle">{desc}</p>', unsafe_allow_html=True)
         
         # Primary Action
-        if st.button(f"🚀 Start New {st.session_state.ai_mode} Session", use_container_width=True, type="primary"):
+        if st.button(f"Start New {st.session_state.ai_mode} Session", use_container_width=True, type="primary"):
             create_thread()
             st.rerun()
 
@@ -199,8 +200,8 @@ def render_hero_screen():
         
         c1, c2 = st.columns(2)
         prompts = [
-            ["💡 Explain Quantum Computing", "📖 Summarize this chapter"],
-            ["🧪 Debug my Python logic", "📝 Generate a mock quiz"]
+            ["Explain Quantum Computing", "Summarize this chapter"],
+            ["Debug my Python logic", "Generate a mock quiz"]
         ]
         
         idx = 0 if st.session_state.ai_mode == "EchoAI" else 1
@@ -217,9 +218,9 @@ def render_hero_screen():
         st.markdown('</div>', unsafe_allow_html=True)
 
         # 2. Preview interaction block
-        with st.expander("🔍 See a preview of the response style"):
+        with st.expander("See a preview of the response style"):
             st.markdown("""
-            **User:** *How do I optimize a SQL query?* **Nexa AI:** To optimize a SQL query, start by analyzing the Execution Plan. 
+            **User:** *How do I optimize a SQL query?* **EchoAI:** To optimize a SQL query, start by analyzing the Execution Plan. 
             Ensure your columns are indexed, avoid `SELECT *`, and use `JOIN` instead of subqueries where possible.
             """)
 
@@ -253,18 +254,50 @@ def render_chat_interface():
     if chat['messages'] and chat['messages'][-1]['role'] == "user":
         with st.chat_message("assistant", avatar="🎓" if st.session_state.ai_mode == "AtlasAI" else "✨"):
             ph = st.empty()
-            if st.session_state.ai_mode == "AtlasAI":
-                res = "I've reviewed your topic. Let's break this down into digestible concepts for your study session. Where should we start?"
-            else:
-                res = "Optimizing response for high-performance intelligence. The parameters are set for professional depth. How shall we proceed?"
-            
-            full = ""
-            for chunk in res.split():
-                full += chunk + " "
+            ph.markdown("⏳ Thinking...")
+
+            try:
+                token = st.session_state.get("token")
+                headers = {"Authorization": f"Bearer {token}"}
+
+                if st.session_state.ai_mode == "AtlasAI":
+                    # ← RAG call
+                    api_res = requests.post(
+                        "http://localhost:8000/rag/",
+                        json={"query": chat['messages'][-1]['content']},
+                        headers=headers,
+                        timeout=60
+                    )
+                else:
+                    # ← EchoAI call
+                    api_res = requests.post(
+                        "http://localhost:8000/chat/",
+                        json={
+                            "messages": chat['messages'],
+                            "speed": st.session_state.echo_speed
+                        },
+                        headers=headers,
+                        timeout=60
+                    )
+
+                if api_res.status_code == 200:
+                    full = api_res.json().get("response", "No response")
+                else:
+                    full = f"Error: {api_res.json().get('detail', 'Something went wrong')}"
+
+            except requests.exceptions.Timeout:
+                full = "Request timed out. Please try again."
+            except Exception as e:
+                full = f"Error: {str(e)}"
+
+            # Streaming effect
+            display = ""
+            for chunk in full.split():
+                display += chunk + " "
                 time.sleep(0.03)
-                ph.markdown(full + " <span style='color:#3b82f6;'>▌</span>", unsafe_allow_html=True)
-            ph.markdown(full)
-            chat['messages'].append({"role": "assistant", "content": full})
+                ph.markdown(display + " <span style='color:#3b82f6;'>▌</span>", unsafe_allow_html=True)
+            ph.markdown(display)
+            chat['messages'].append({"role": "assistant", "content": display})
 
 # --- 4. THE MASTER WRAPPER FUNCTION ---
 def render_nexus_app():

@@ -1,5 +1,6 @@
 import streamlit as st
-
+import base64
+import os
 # --- 1. STYLES SECTION ---
 def inject_custom_css():
     st.markdown("""
@@ -26,7 +27,7 @@ def inject_custom_css():
             margin-top: 0rem !important;
         }
         
-        .logo-container {
+        /*.logo-container {
             font-size: 28px;
             font-weight: 800;
             background: linear-gradient(90deg, #3B82F6 0%, #FFFFFF 100%);
@@ -36,8 +37,35 @@ def inject_custom_css():
             align-items: center;
             height: 100%; 
             padding-top: 5px;
-        }
+        }*/
+        /* Container to align items horizontally */
+.logo-wrapper {
+    display: flex;
+    align-items: center; /* Vertical centering */
+    gap: 12px;           /* Perfect spacing between logo and text */
+    height: 100%;
+    padding-top: 10px;
+    display: block;
+}
 
+/* Style for the hexagonal logo */
+.navbar-logo {
+    width: 38px;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+
+/* Style for the text */
+.logo-text {
+    font-size: 25px;
+    font-weight: 700;
+    color: #FFFFFF;
+    background: none;
+    -webkit-text-fill-color: white; /* Overrides previous gradient if needed */
+    line-height: 1;
+    display: inline-block;
+}
         div.stButton > button[key="nav_login"], div.stButton > button[key="nav_gs"], div.stButton > button[key="hero_cta"] {
             background-color: #3B82F6 !important;
             color: white !important;
@@ -334,11 +362,26 @@ def inject_custom_css():
         """, unsafe_allow_html=True)
 
 # --- 2. NAVIGATION SECTION ---
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
 
 def render_navbar():
+    current_dir = os.path.dirname(os.path.abspath(__file__)) # points to Frontend/modules
+    logo_path = os.path.join(current_dir, "..", "assets", "logo.png")
+    
+    # 2. Convert logo to base64 string
+    logo_base64 = get_base64_of_bin_file(logo_path)
     nav_col1, nav_col2, nav_col3 = st.columns([2.5, 4.5, 3])
     with nav_col1:
-        st.markdown('<div class="logo-container">⚡ NexaAI</div>', unsafe_allow_html=True)
+        # This replaces the text with your logo image
+        st.markdown(f'''
+            <div class="logo-container">
+                <img src="data:image/png;base64,{logo_base64}" width="40" style="margin-right:5px; vertical-align: middle;"> 
+                <span class="logo-text">NexaAI</span>
+            </div>
+        ''', unsafe_allow_html=True)
     with nav_col2:
         # Keep your exact HTML logic
         st.markdown("""
@@ -372,7 +415,7 @@ def render_hero():
     
     # --- LEFT SIDE (Unchanged) ---
     with hero_left:
-        st.markdown('<p style="color: #3B82F6; font-weight: 600; margin-bottom: -10px; letter-spacing: 1px;">PROXIMITY LEARNING 2.0</p>', unsafe_allow_html=True)
+        
         st.markdown('<h1 class="hero-title">Think faster,<br>learn smarter</h1>', unsafe_allow_html=True)
         st.markdown('<p class="hero-subtitle">The first AI Teaching Assistant built specifically for your courses. Transform static study materials into an interactive knowledge base.</p>', unsafe_allow_html=True)
         left_gap, center_col, right_gap = st.columns([1, 8, 1])
@@ -389,7 +432,6 @@ def render_hero():
             st.markdown("<p style='text-align: center; color: #555; margin: 10px 0; font-size: 14px;'>— OR —</p>", unsafe_allow_html=True)
             
             st.button("Continue with Google", key="hero_google", use_container_width=True)
-        st.markdown("<div style='display: flex; gap: 20px; color: #555; font-size: 13px; margin-top: 25px;'><span>✓ No Credit Card Required</span><span>✓ Student Focused</span><span>✓ Privacy First</span></div>", unsafe_allow_html=True)
 
     # --- RIGHT SIDE (Internal Tab Logic) ---
     with hero_right:
@@ -565,8 +607,8 @@ def render_landing_page():
 
 def main():
     st.set_page_config(
-        page_title="AI Teaching Assistant | Learn Faster",
-        page_icon="🧠",
+        page_title="NexaAI",
+        page_icon="D:/data scientists/Ai Teaching Assistance/ai-teaching-assistant/Frontend/assets/logo.png",
         layout="wide",
         initial_sidebar_state="collapsed"
     )
