@@ -1,0 +1,5 @@
+[theme]
+primaryColor = "#2563EB"        # Solid blue
+backgroundColor = "#0a0a0a"
+secondaryBackgroundColor = "#0e0e0e"
+textColor = "#FFFFFF"

@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from backend.core.security import hash_password
 from db.database import get_db
 from services.auth_service import register_user, login_user
 from schemas.auth_schema import RegisterRequest, LoginRequest, TokenResponse
@@ -9,7 +10,7 @@ from dependencies.auth import get_current_user
 from models.user import User
 from utils.logger import get_logger
 from fastapi.security import OAuth2PasswordRequestForm
-
+from pydantic import BaseModel
 logger = get_logger(__name__)
 
 router = APIRouter()
@@ -57,3 +58,18 @@ def get_me(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
         "created_at": current_user.created_at
     }
+    
+# -------------------- RESET PASSWORD --------------------
+class ResetPasswordRequest(BaseModel):
+    email: str
+    new_password: str
+
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.password_hash = hash_password(data.new_password)
+    db.commit()
+    logger.info(f"[AUTH API] Password reset | email={data.email}")
+    return {"message": "Password updated successfully"}
