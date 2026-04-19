@@ -1,9 +1,4 @@
-Okay, I understand. Let’s focus on the video about “Where CSS taught”.
+Block elements are taught in this course.
 
-You’ve asked about the content of the video “Where CSS taught”.  I can tell you that this video covers the fundamental concepts of CSS – how it’s written, and how to get started with it.
-
-Specifically, the video covers the first four minutes where CSS is taught. It starts with an introduction to CSS, explaining what it is and why it’s important for web development. It then goes on to show how CSS is written, focusing on the basics of selectors, properties, and values.  It then briefly introduces how CSS works in relation to HTML and JavaScript.
-
-To find this video, simply click on the "Where CSS taught" link in your course.  You’ll find it listed under the “Video Chunks” section. 
-
-Is there anything else I can help you with related to the course today?
+Video: 8 (Inline & Block Elements in HTML)
+Timestamp: Not specified

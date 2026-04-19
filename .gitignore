@@ -1,8 +1,26 @@
 jsons/
 readchunks/
-embeddings.joblib
-app/
-.venv/
-__pycache__
+# Env
 .env
-logs/
+
+# Database
+*.db
+
+# Embeddings
+*.joblib
+
+# Generated files
+**/prompt.txt
+**/response.txt
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual env
+venv/
+.env/
+.venv/
+
+# Logs
+*.log

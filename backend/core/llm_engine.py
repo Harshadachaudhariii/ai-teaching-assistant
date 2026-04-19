@@ -18,7 +18,8 @@ logger.info(f"[LLM ENGINE] Client initialized at {settings.OLLAMA_BASE_URL}")
 # -------------------- MODELS --------------------
 ECHO_DEFAULT_MODEL = "llama3:latest"
 ECHO_FAST_MODEL = "phi3:mini"
-ATLAS_MODEL = "gemma3:1b"
+ECHO_SMART_MODEL = "qwen3.5:9b"
+ATLAS_MODEL = "llama3:latest"
 
 # -------------------- ECHOAI --------------------
 def generate_echo_response(messages: list, speed: str = "default") -> str:
@@ -26,11 +27,16 @@ def generate_echo_response(messages: list, speed: str = "default") -> str:
     EchoAI — General purpose
     speed = "default" → llama3:latest
     speed = "fast"    → phi3:mini
+    speed = "smart"   → qwen3.5:9b
     """
     if speed == "fast":
         model = ECHO_FAST_MODEL
         temperature = 0.6
         max_tokens = 300
+    elif speed == "smart":
+        model = ECHO_SMART_MODEL
+        temperature = 0.8
+        max_tokens = 500
     else:
         model = ECHO_DEFAULT_MODEL
         temperature = 0.7
@@ -65,7 +71,7 @@ def generate_echo_response(messages: list, speed: str = "default") -> str:
 def generate_atlas_response(context_df, query: str) -> str:
     """
     AtlasAI — RAG based
-    Uses gemma3:1b with course context
+    Uses llama3:latest with course context
     """
     try:
         prompt = f"""I am teaching web development using Sigma web development course. 
