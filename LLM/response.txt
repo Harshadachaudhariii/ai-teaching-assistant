@@ -1,4 +1,0 @@
-Block elements are taught in this course.
-
-Video: 8 (Inline & Block Elements in HTML)
-Timestamp: Not specified
