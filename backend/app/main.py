@@ -10,6 +10,7 @@ from db.base import Base
 from models.user import User
 from models.chat import Chat
 from models.message import Message
+from models.otp import OTPRecord        # ✅ OTP table
 
 # -------------------- ROUTERS --------------------
 from api.auth import router as auth_router
@@ -35,7 +36,7 @@ app = FastAPI(
 # -------------------- CORS --------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],        # change to your frontend URL in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -57,7 +58,7 @@ def root():
     logger.info("[MAIN] Root endpoint hit")
     return {
         "message": "AI Teaching Assistant Backend is running",
-        "docs": "/docs",
+        "docs":    "/docs",
         "version": "1.0.0"
     }
 

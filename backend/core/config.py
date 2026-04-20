@@ -7,6 +7,7 @@ logger = get_logger(__name__)
 
 # -------------------- SETTINGS --------------------
 class Settings(BaseSettings):
+
     # Database
     DATABASE_URL: str = "sqlite:///./test.db"
 
@@ -18,6 +19,16 @@ class Settings(BaseSettings):
     # Ollama
     OLLAMA_BASE_URL: str = "http://localhost:11434"
 
+    # ✅ Email OTP Settings
+    EMAIL_HOST: str = "smtp.gmail.com"
+    EMAIL_PORT: int = 587
+    EMAIL_USERNAME: str = ""
+    EMAIL_PASSWORD: str = ""
+    EMAIL_FROM: str = ""
+
+    # OTP expiry in minutes
+    OTP_EXPIRE_MINUTES: int = 1
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
@@ -27,4 +38,5 @@ settings = Settings()
 
 logger.info(f"[CONFIG] Database: {settings.DATABASE_URL}")
 logger.info(f"[CONFIG] Ollama: {settings.OLLAMA_BASE_URL}")
+logger.info(f"[CONFIG] Email: {settings.EMAIL_USERNAME}")
 logger.info("[CONFIG] Settings loaded successfully")

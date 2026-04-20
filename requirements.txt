@@ -27,3 +27,7 @@ joblib
 
 # -------------------- FRONTEND --------------------
 streamlit
+requests
+Pillow
+qrcode
+reportlab

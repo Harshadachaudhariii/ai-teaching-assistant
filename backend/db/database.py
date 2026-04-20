@@ -1,7 +1,5 @@
 #  db/database.py
 
-# db/database.py
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from utils.logger import get_logger

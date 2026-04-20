@@ -1,6 +1,5 @@
 # services/rag_service.py
 # atlasAI - RAG (Retrieval-Augmented Generation) Service
-# services/rag_service.py
 # AtlasAI Service
 
 from core.vector_store import search_similar_chunks
@@ -26,3 +25,4 @@ def generate_rag_response(user_query: str) -> str:
 
     logger.info(f"[RAG SERVICE] Response ready | preview={response[:60]}")
     return response
+
