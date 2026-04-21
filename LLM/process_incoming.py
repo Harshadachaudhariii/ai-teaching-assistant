@@ -152,7 +152,7 @@ threshold = 0.55
 filtered_idx = [i for i, score in enumerate(similarities) if score > threshold]
 
 if not filtered_idx:
-    print("❌ No strong match found")
+    print(" No strong match found")
     exit()
 
 # Top-K results

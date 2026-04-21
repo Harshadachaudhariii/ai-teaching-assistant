@@ -11,7 +11,7 @@ load_dotenv()
 logger = get_logger(__name__)
 
 # -------------------- DATABASE URL --------------------
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./nexa_ai.db")
 
 logger.info(f"Connecting to database: {DATABASE_URL}")
 

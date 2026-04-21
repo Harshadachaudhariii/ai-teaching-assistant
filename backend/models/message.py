@@ -13,6 +13,7 @@ class Message(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     chat_id = Column(Integer, ForeignKey("chats.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True) 
     role = Column(String, nullable=False)       # "user" or "assistant"
     content = Column(String, nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow)
@@ -23,3 +24,5 @@ class Message(Base):
     def __repr__(self):
         logger.info(f"[MESSAGE MODEL] Message created: chat_id={self.chat_id} role={self.role}")
         return f"<Message id={self.id} chat_id={self.chat_id} role={self.role}>"
+    
+    

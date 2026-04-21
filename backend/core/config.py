@@ -9,7 +9,7 @@ logger = get_logger(__name__)
 class Settings(BaseSettings):
 
     # Database
-    DATABASE_URL: str = "sqlite:///./test.db"
+    DATABASE_URL: str = "sqlite:///./nexa_ai.db"
 
     # JWT
     SECRET_KEY: str

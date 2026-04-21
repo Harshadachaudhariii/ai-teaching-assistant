@@ -126,7 +126,7 @@ def inject_ui_styles():
 def init_store():
     if "chats" not in st.session_state: st.session_state.chats = {}
     if "active_id" not in st.session_state: st.session_state.active_id = None
-    if "ai_mode" not in st.session_state: st.session_state.ai_mode = "EchoAI"
+    if "ai_mode" not in st.session_state: st.session_state.ai_mode = "AtlasAI"
     if "echo_speed" not in st.session_state: st.session_state.echo_speed = "default"
     if "rename_cid" not in st.session_state: st.session_state.rename_cid = None
 
@@ -180,8 +180,8 @@ def render_sidebar():
         st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
         mode = st.radio(
             "Choose Assistant",
-            ["EchoAI", "AtlasAI"],
-            help="EchoAI: General topics | AtlasAI: Personalized learning partner"
+            ["AtlasAI", "EchoAI"],
+            help="AtlasAI: Personalized learning partner | EchoAI: General topics"
         )
 
         if st.session_state.ai_mode == "EchoAI":
@@ -258,9 +258,17 @@ def render_message(role, text):
     if role == "user":
         st.markdown(f'<div class="user-bubble">{text}</div><div style="clear:both"></div>', unsafe_allow_html=True)
     else:
-        icon = "🎓" if st.session_state.ai_mode == "AtlasAI" else "🧠"
-        with st.chat_message("assistant", avatar=icon):
-            st.markdown(text)
+        # ✅ Use logo image as avatar for both AI modes
+        import os
+        logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "logo.png")
+        try:
+            from PIL import Image
+            logo = Image.open(logo_path)
+            with st.chat_message("assistant", avatar=logo):
+                st.markdown(text)  # ✅ proper markdown rendering
+        except Exception:
+            with st.chat_message("assistant"):
+                st.markdown(text)
 
 def render_hero_screen():
     st.markdown("<br><br><br>", unsafe_allow_html=True)
@@ -357,7 +365,17 @@ def render_chat_interface():
         st.rerun()
 
     if chat['messages'] and chat['messages'][-1]['role'] == "user":
-        with st.chat_message("assistant", avatar="🎓" if st.session_state.ai_mode == "AtlasAI" else "✨"):
+        # ✅ Load logo for avatar
+        import os
+        logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "logo.png")
+        try:
+            from PIL import Image
+            logo = Image.open(logo_path)
+            avatar = logo
+        except Exception:
+            avatar = None
+
+        with st.chat_message("assistant", avatar=avatar):
             ph = st.empty()
             ph.markdown("⏳ Thinking...")
 
@@ -393,14 +411,17 @@ def render_chat_interface():
             except Exception as e:
                 full = f"Error: {str(e)}"
 
-            # Streaming effect
+            # ✅ Streaming effect word by word
             display = ""
             for chunk in full.split():
                 display += chunk + " "
-                time.sleep(0.03)
-                ph.markdown(display + " <span style='color:#3b82f6;'>▌</span>", unsafe_allow_html=True)
-            ph.markdown(display)
-            chat['messages'].append({"role": "assistant", "content": display})
+                time.sleep(0.02)
+                # Show plain text while streaming
+                ph.markdown(display + "▌")
+
+            # ✅ Final render with proper markdown (code blocks, bold, etc.)
+            ph.markdown(full)
+            chat['messages'].append({"role": "assistant", "content": full})
 
 # --- 4. THE MASTER WRAPPER FUNCTION ---
 def render_nexus_app():

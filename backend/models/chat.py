@@ -1,6 +1,6 @@
 # models/chat.py
 
-from sqlalchemy import Column, Integer, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, ForeignKey, DateTime, String
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from db.base import Base
@@ -13,8 +13,10 @@ class Chat(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    assistant_name = Column(String, nullable=False) # "echoai" or "atlasai"
     created_at = Column(DateTime, default=datetime.utcnow)
-
+    
+    
     # -------------------- RELATIONSHIPS --------------------
     user = relationship("User", back_populates="chats")
     messages = relationship("Message", back_populates="chat")
