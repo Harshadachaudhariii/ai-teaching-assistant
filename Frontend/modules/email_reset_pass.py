@@ -390,7 +390,7 @@ def render_email_step():
     st.caption("Enter your email to receive a 6-digit verification code.")
 
     with st.container(border=True):
-        email = st.text_input("Email Address", placeholder="name@company.com")
+        email = st.text_input("Email Address", placeholder="name@gmail.com")
 
         if st.button("Send OTP", type="primary", use_container_width=True):
             if not validate_email(email):

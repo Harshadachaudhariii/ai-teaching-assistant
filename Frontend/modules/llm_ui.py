@@ -5,6 +5,8 @@ import time
 import uuid
 from datetime import datetime
 import requests
+import os
+from PIL import Image
 
 # --- 1. ARCHITECTURAL DESIGN SYSTEM (CSS) ---
 def inject_ui_styles():
@@ -13,19 +15,22 @@ def inject_ui_styles():
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@300;400;600&display=swap');
 
-        .stApp {{ background-color: #0a0a0a; color: #f3f4f6; font-family: 'Inter', sans-serif; line-height: 1.6; }}
+        .stApp {{ background-color: #0a0a0a; color: #f3f4f6; font-family: 'Inter', sans-serif; line-height: 1.2; }}
         [data-testid="stSidebarNav"] {{ display: none !important; }}
 
         .hero-title {{
             text-align: center; font-family: 'Lexend Deca', sans-serif;
             font-size: 4rem; font-weight: 600; letter-spacing: -4px; 
-            background: linear-gradient(to bottom, #ffffff 30%, #6b7280 100%);
+            background: linear-gradient(to bottom, #ffffff 30%, #101db5 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: 0px;
             margin-bottom: 0px;
+            
         }}
         .hero-subtitle {{
             text-align: center; color: #9ca3af; font-size: 1.1rem; 
             font-weight: 300; margin-bottom: 40px;
+            margin-bottom: 25px;
         }}
         .glass-card {{
             background: rgba(255, 255, 255, 0.03);
@@ -119,7 +124,66 @@ def inject_ui_styles():
             background-color: rgba(59,130,246,0.08) !important;
             border-radius: 6px !important;
         }}
-        </style>
+        .chat-scroll-area {{
+            max-height: calc(100vh - 520px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 4px 2px;
+        }}
+
+        /* scrollbar */
+        .chat-scroll-area::-webkit-scrollbar {{
+            width: 3px;
+        }}
+        .chat-scroll-area::-webkit-scrollbar-thumb {{
+            background: #2e2e2e;
+            border-radius: 10px;
+        }}
+
+        /* Sticky bottom section */
+        .sidebar-bottom-section {{
+            position: sticky;
+            bottom: 0;
+            background-color: #0d0d0d;
+            padding-top: 8px;
+            z-index: 999;
+            border-top: 1px solid #1e1e1e;
+        }}
+        /* ---- Popover Menu Precision Styling ---- */
+
+/* 1. Force the container to match the sidebar background exactly */
+div[data-testid="stPopoverBody"] {{
+    background-color: #0d0d0d !important; /* Matches your sidebar */
+    border: 2px solid #1e1e1e !important; /* Subtle border for definition */
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5) !important;
+    padding: 4px !important;
+    min-width: 150px !important;
+}}
+
+/* 2. Strip any background from the inner Streamlit wrapper */
+div[data-testid="stPopoverBody"] > div {{
+    background-color: transparent !important;
+}}
+
+/* 3. Style the buttons to be clean and flat */
+div[data-testid="stPopoverBody"] button {{
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #d1d5db !important;
+    width: 100% !important;
+    text-align: left !important;
+    padding: 8px 12px !important;
+    font-size: 0.85rem !important;
+}}
+
+/* 4. Subtle hover tint instead of solid gray */
+div[data-testid="stPopoverBody"] button:hover {{
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6 !important;
+    border-radius: 1px !important;
+}}
+                        </style>
     """, unsafe_allow_html=True)
 
 # --- 2. CORE ENGINE & STATE ---
@@ -175,13 +239,16 @@ def rename_chat_dialog(cid):
 # --- 3. UI COMPONENTS ---
 def render_sidebar():
     with st.sidebar:
-        st.markdown("<h2 style='letter-spacing:-1.5px; font-weight:600;'>Nexa<span style='color:#3b82f6;'>AI</span></h2>", unsafe_allow_html=True)
 
+        # -------- LOGO --------
+        st.markdown("<h2 style='letter-spacing:-1.5px; font-weight:600;'>Nexa<span style='color:#3b82f6;'>AI</span></h2>", unsafe_allow_html=True)
         st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
+
+        # -------- AI MODE --------
         mode = st.radio(
             "Choose Assistant",
             ["AtlasAI", "EchoAI"],
-            help="AtlasAI: Personalized learning partner | EchoAI: General topics"
+            help="AtlasAI: Video-based learning | EchoAI: Quick answers"
         )
 
         if st.session_state.ai_mode == "EchoAI":
@@ -195,20 +262,29 @@ def render_sidebar():
 
         if mode != st.session_state.ai_mode:
             st.session_state.ai_mode = mode
-            create_thread()
+            st.session_state.active_id = None
             st.rerun()
 
+        # -------- NEW CHAT --------
         st.markdown("---")
         if st.button("＋ New Chat", use_container_width=True):
             create_thread()
             st.rerun()
 
-        st.markdown('<div style="color:#4b5563; font-size:0.7rem; font-weight:700; text-transform:uppercase; margin:20px 0 10px 5px;">History</div>', unsafe_allow_html=True)
+        # -------- HISTORY LABEL --------
+        st.markdown(
+            '<div style="color:#4b5563; font-size:0.7rem; font-weight:700; text-transform:uppercase; margin:12px 0 6px 5px;">History</div>',
+            unsafe_allow_html=True
+        )
 
+        # -------- SEARCH --------
         find_chat = st.text_input("Find Chat", placeholder="Search Chat...", label_visibility="collapsed")
 
         chat_list = list(reversed(list(st.session_state.chats.items())))
         filtered_chats = [item for item in chat_list if find_chat.lower() in item[1]['title'].lower()]
+
+        # -------- SCROLLABLE AREA — open div --------
+        st.markdown('<div class="chat-scroll-area">', unsafe_allow_html=True)
 
         if not filtered_chats:
             st.caption("No chat found.")
@@ -217,42 +293,47 @@ def render_sidebar():
                 is_active = cid == st.session_state.active_id
                 cols = st.columns([0.78, 0.22])
                 with cols[0]:
-                    label = f"📖 {data['title'][:16]}" if data.get('mode') == "AtlasAI" else f"{data['title'][:16]}"
+                    label = f"{data['title'][:16]}"
                     if st.button(label, key=f"n_{cid}", type="primary" if is_active else "secondary"):
                         st.session_state.active_id = cid
                         st.rerun()
                 with cols[1]:
                     with st.popover("•••"):
-                        if st.button("✏️ Rename", key=f"ren_{cid}", use_container_width=True):
+                        if st.button("Rename", key=f"ren_{cid}", use_container_width=True):
                             rename_chat_dialog(cid)
-                        if st.button("🗑️ Delete", key=f"del_{cid}", use_container_width=True):
+                        if st.button("Delete", key=f"del_{cid}", use_container_width=True):
                             delete_chat_dialog(cid)
 
-        st.markdown("<div style='margin-top: 30px;'></div>", unsafe_allow_html=True)
-        st.markdown("---")
+        # -------- SCROLLABLE AREA — close div --------
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        # ✅ Fix — dynamic username from session state
+        # -------- STICKY BOTTOM --------
+        st.markdown('<div class="sidebar-bottom-section">', unsafe_allow_html=True)
+
         user_name = st.session_state.get("profile_data", {}).get("name", "User")
         user_initial = user_name[0].upper() if user_name else "U"
 
         st.markdown(f"""
-            <div style='display: flex; align-items: center; gap: 10px; padding: 5px;'>
-                <div style='background: #3b82f6; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;'>{user_initial}</div>
-                <div style='overflow: hidden;'>
+            <div style='display:flex; align-items:center; gap:10px; padding:6px 5px;'>
+                <div style='background:#3b82f6; width:32px; height:32px; border-radius:50%;
+                     display:flex; align-items:center; justify-content:center;
+                     font-weight:bold; flex-shrink:0;'>{user_initial}</div>
+                <div>
                     <p style='margin:0; font-size:0.85rem; font-weight:600;'>{user_name}</p>
                 </div>
             </div>
-            <div style='margin-top: 10px;'></div>
         """, unsafe_allow_html=True)
 
-        if st.button("👤 View Profile", use_container_width=True):
+        if st.button("View Profile", use_container_width=True):
             st.session_state.page = "profile"
             st.rerun()
 
-        if st.button("🚪 Logout", use_container_width=True):
+        if st.button("Logout", use_container_width=True):
             st.session_state.clear()
             st.session_state.page = "login"
             st.rerun()
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
 def render_message(role, text):
     if role == "user":
@@ -275,20 +356,17 @@ def render_hero_screen():
     _, mid, _ = st.columns([0.15, 0.7, 0.15])
     with mid:
         st.markdown(f'<h1 class="hero-title">{st.session_state.ai_mode}</h1>', unsafe_allow_html=True)
-        desc = "Your personalized learning partner for exam prep and research." if st.session_state.ai_mode == "AtlasAI" else "The industrial standard for deep logic and professional intelligence."
+        desc = "Learn directly from your course videos with clear explanations and exact timestamps." if st.session_state.ai_mode == "AtlasAI" else "Need a quick answer? Get clear explanations instantly without watching the full lecture."
         st.markdown(f'<p class="hero-subtitle">{desc}</p>', unsafe_allow_html=True)
 
         if st.button(f"Start New {st.session_state.ai_mode} Session", use_container_width=True, type="primary"):
             create_thread()
             st.rerun()
 
-        # st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        # st.markdown("<p style='font-size:0.8rem; color:#6b7280; font-weight:600; text-transform:uppercase; margin-bottom:15px;'>Suggested Prompts</p>", unsafe_allow_html=True)
-
         c1, c2 = st.columns(2)
         prompts = [
-            ["Fix my Python error", " Write a SQL query"],
-            ["Debug my Python logic", "Generate a mock quiz"]
+            ["Summaries Css Box Model", " Write a simple html skeleton for a webpage"],
+            ["Where is margin taught?", "Where is SEO taught in this course?"]
         ]
 
         idx = 0 if st.session_state.ai_mode == "EchoAI" else 1
@@ -305,10 +383,24 @@ def render_hero_screen():
         st.markdown('</div>', unsafe_allow_html=True)
 
         with st.expander("See a preview of the response style"):
-            st.markdown("""
-            **User:** *How do I optimize a SQL query?* **EchoAI:** To optimize a SQL query, start by analyzing the Execution Plan. 
-            Ensure your columns are indexed, avoid `SELECT *`, and use `JOIN` instead of subqueries where possible.
-            """)
+
+            if st.session_state.ai_mode == "EchoAI":
+               st.markdown("""
+                **User:** *What is the CSS Box Model?*  
+
+                **EchoAI:** The CSS Box Model defines how elements are structured and spaced in a webpage.  
+                It consists of content, padding, border, and margin, which together control layout and spacing.
+                    """)
+
+            else:  # AtlasAI
+                st.markdown("""
+        **User:** *Where is margin taught?*  
+
+        **AtlasAI:** Margin is part of the CSS Box Model and controls the space outside an element.
+        
+        **Video:** x (CSS Box Model)  
+        **Timestamp:** 12:40
+                """)
 
 def render_chat_interface():
     st.markdown(f"""
@@ -323,9 +415,6 @@ def render_chat_interface():
     if not chat['messages']:
         st.markdown("<br><br>", unsafe_allow_html=True)
         st.info(f"**Welcome to your new {st.session_state.ai_mode} session.** Type your first message below or choose a starter.")
-        if st.button("✨ What are we working on today?"):
-            chat['messages'].append({"role": "user", "content": "What can you help me with in this mode?"})
-            st.rerun()
 
     for msg in chat['messages']:
         render_message(msg['role'], msg['content'])
@@ -350,7 +439,7 @@ def render_chat_interface():
                         "speed": "fast"
                     },
                     headers=headers,
-                    timeout=15
+                    timeout=5
                 )
                 if title_res.status_code == 200:
                     ai_title = title_res.json().get("response", "").strip()
@@ -377,7 +466,7 @@ def render_chat_interface():
 
         with st.chat_message("assistant", avatar=avatar):
             ph = st.empty()
-            ph.markdown("⏳ Thinking...")
+            ph.markdown("Thinking...")
 
             try:
                 token = st.session_state.get("token")
@@ -398,7 +487,7 @@ def render_chat_interface():
                             "speed": st.session_state.echo_speed
                         },
                         headers=headers,
-                        timeout=60
+                        timeout=180
                     )
 
                 if api_res.status_code == 200:
@@ -436,7 +525,23 @@ def render_nexus_app():
 
 # --- 5. ENTRY POINT ---
 def main():
-    st.set_page_config(page_title="Nexus AI", layout="wide")
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    logo_path = os.path.join(base_dir, "assets", "logo.png")
+
+    try:
+        # 2. Load the image file
+        logo_img = Image.open(logo_path)
+        
+        # 3. Apply the logo to the page configuration
+        st.set_page_config(
+            page_title="Nexa AI", 
+            page_icon=logo_img,  # ✅ This adds the logo to your browser tab
+            layout="wide"
+        )
+    except Exception:
+        # Fallback if image path is incorrect
+        st.set_page_config(page_title="Nexa AI", layout="wide")
+
     render_nexus_app()
 
 if __name__ == "__main__":

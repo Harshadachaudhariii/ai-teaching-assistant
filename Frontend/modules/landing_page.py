@@ -80,15 +80,17 @@ def inject_custom_css():
         }
 
         .hero-title {
-            font-size: 72px !important;
-            font-weight: 700;
-            line-height: 1.25 !important;
-            letter-spacing: -2px;
-            margin-bottom: 20px;
-            background: linear-gradient(90deg, #FFFFFF 0%, #3B82F6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+    font-size: 64px !important;      /* Force the size */
+    line-height: 1.1 !important;    /* Fix the overlap - adjust this number as needed */
+    margin-bottom: 10px !important;  /* Create space between lines */
+    display: block !important;
+}
+
+/* Force the icon font to render correctly */
+.material-icons, .material-symbols-outlined {
+    font-family: 'Material Icons' !important;
+    font-display: block;
+}
 
         .hero-subtitle {
             font-size: 22px;

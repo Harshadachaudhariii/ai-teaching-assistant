@@ -1,1260 +1,3 @@
-# import streamlit as st
-# from datetime import datetime, date
-# import re
-# import qrcode
-# import io
-# import random
-# import json
-# import requests
-# from datetime import datetime
-# from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-# from reportlab.lib.styles import getSampleStyleSheet
-
-# # =========================
-# # PROFESSIONAL CSS (Updated)
-# # =========================
-# def inject_profile_styles():
-#     st.markdown("""
-#     <style>
-#     #MainMenu, footer {visibility: hidden;}
-
-#     html, body {
-#         background-color: #0a0a0a !important;
-#         overflow-x: hidden !important;
-#     }
-#     .stApp {
-#     overflow-x: hidden !important;
-# }
-#     .block-container {
-#     max-width: 100vw;
-#     overflow-x: hidden !important;
-# }
-#     /* Sidebar Styling */
-#     [data-testid="stSidebar"] {
-#         background-color: #0e0e0e !important;
-#         border-right: 1px solid #1e293b;
-#         display: flex !important;
-#     }
-
-#     /* UNIVERSAL BUTTON THEME: Transparent, Blue Hover */
-# div.stButton > button {
-#     width: fit-content;
-#     text-align: left;
-#     background-color: transparent !important;
-#     color: #ded1d1 !important;
-#     border: 1px solid transparent !important; 
-#     box-shadow: none !important;
-#     border-radius: 8px;
-#     font-size: 14px;
-#     transition: all 0.3s ease;
-#     padding: 8px 12px;
-#     margin-top: 1px;
-#     margin-left: 10px;
-# }
-#     /* Professional Hover Effect */
-#     div.stButton > button:hover {
-#         color: #2563eb !important;
-#         border: 1px solid #2563eb !important;
-#         background-color: transparent !important;
-#     }
-
-#     /* Popover Position & Style */
-#     .stPopover {
-#         float: right;
-#         margin-top: -30px;
-#         margin-left: 1040px;
-#     }
-#     .stPopover > div:first-child > button {
-#         border-radius: 50% !important;
-#         width: 40px !important;
-#         height: 40px !important;
-#         background-color: #111111 !important;
-#         border: 1px solid #222 !important;
-#     }
-
-#     /* Sidebar Titles */
-#     .sidebar-title {
-#         font-size: 11px;
-#         letter-spacing: 1px;
-#         color: #555;
-#         margin-top: 15px;
-#         margin-bottom: 5px;
-#         padding-left: 10px;
-#         font-weight: bold;
-#     }
-
-#     .separator {
-#         border-bottom: 1px solid #222;
-#         margin: 20px 0;
-#     }
-
-#     .logout-container {
-#         position: absolute;
-#         bottom: 20px;
-#         width: 100%;
-#     }
-    
-#     </style>
-#     """, unsafe_allow_html=True)
-
-
-# def generate_pdf(data):
-#     buffer = io.BytesIO()
-
-#     doc = SimpleDocTemplate(buffer)
-#     styles = getSampleStyleSheet()
-
-#     content = []
-
-#     content.append(Paragraph("User Data Export", styles["Title"]))
-#     content.append(Spacer(1, 10))
-
-#     content.append(Paragraph(f"Name: {data['user_info']['name']}", styles["Normal"]))
-#     content.append(Paragraph(f"Degree: {data['user_info']['degree']}", styles["Normal"]))
-#     content.append(Paragraph(f"Batch: {data['user_info']['batch']}", styles["Normal"]))
-#     content.append(Spacer(1, 10))
-
-#     content.append(Paragraph("Security Settings", styles["Heading2"]))
-#     content.append(Paragraph(f"2FA Enabled: {data['security_settings']['two_factor_enabled']}", styles["Normal"]))
-#     content.append(Paragraph(f"Visibility: {data['security_settings']['profile_visibility']}", styles["Normal"]))
-#     content.append(Spacer(1, 10))
-
-#     content.append(Paragraph("Projects", styles["Heading2"]))
-#     for proj in data["projects"]:
-#         content.append(Paragraph(f"- {proj}", styles["Normal"]))
-
-#     doc.build(content)
-#     buffer.seek(0)
-
-#     return buffer
-
-# # =========================
-# # SESSION STATE (Dynamic Ready)
-# # =========================
-
-# def load_default_profile():
-#     """Fallback profile (used only if no real data is loaded)"""
-#     return {
-#         "name": "User",
-#         "email": "",
-#         "qualification": "",
-#         "mobile": "",
-#         "dob": date(2000, 1, 1),
-#         "country": "India",
-#         "username": "",
-#         "gender": "Other",
-#         "goal": "",
-#         "level": "Beginner",
-#         "interest": [],
-#     }
-
-
-# # Initialize profile data safely
-# if "profile_data" not in st.session_state:
-#     st.session_state.profile_data = load_default_profile()
-
-# # =========================
-# # FUNCTIONS (Your Logic)
-# # =========================
-# def logout():
-#     # ✅ Fix — redirect to login after logout
-#     st.session_state.clear()
-#     st.session_state.page = "login"
-#     st.rerun()
-    
-# def get_password_status(password):
-#     return {
-#         "8+ characters": len(password) >= 8,
-#         "A number": bool(re.search(r"\d", password)),
-#         "A special character": bool(re.search(r"[@$!%*?&]", password)),
-#         "Uppercase letter": bool(re.search(r"[A-Z]", password)),
-#     }
-
-# # =========================
-# # TOP RIGHT PROFILE MENU
-# # =========================
-# def render_topbar():
-#     with st.popover("👤"):
-#         st.markdown(f"**{st.session_state.profile_data['name']}**")
-#         if st.button("View Profile", use_container_width=True):
-#             st.session_state.view = "Profile"
-#             st.rerun()
-#         if st.button("Logout", type="secondary", use_container_width=True):
-#             logout()
-
-# # =========================
-# # SIDEBAR (Your Logic)
-# # =========================
-# def render_sidebar():
-#     with st.sidebar:
-#         data = st.session_state.profile_data
-#         initial = data["name"][0] if data["name"] else "U"
-
-#         st.markdown(f"""
-#         <div style="display:flex; align-items:center; gap:10px; padding-left:10px;">
-#             <div style="width:40px;height:40px;border-radius:50%;background:#2563eb;color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;">{initial}</div>
-#             <div>
-#                 <b style="color:white;">{data['name']}</b><br>
-#                 <span style='font-size:12px;color:gray;'>{data.get('goal','User')}</span>
-#             </div>
-#         </div>
-#         """, unsafe_allow_html=True)
-
-#         st.markdown('<div class="separator"></div>', unsafe_allow_html=True)
-#         if st.button("Back to Chat", use_container_width=False):
-#             st.session_state.page = "llm_ui"
-#             st.rerun()
-#         st.markdown('<div class="sidebar-title">ACCOUNT</div>', unsafe_allow_html=True)
-
-#         if st.button("👤 Profile"): st.session_state.view = "Profile"
-#         if st.button("⚙️ Settings"): st.session_state.view = "Settings"
-#         if st.button("🔐 Security"): st.session_state.view = "Security"
-#         if st.button("🔗 Connected Accounts"): st.session_state.view = "Connections"
-#         if st.button("🛡️ Privacy"): st.session_state.view = "Privacy"
-
-#         st.markdown('<div class="sidebar-title">INSIGHTS</div>', unsafe_allow_html=True)
-#         if st.button("📊 Profile Insights"): st.session_state.view = "Insights"
-#         if st.button("🤖 AI Insights"): st.session_state.view = "AI"
-#         if st.button("🕒 Activity Log"): st.session_state.view = "Activity"
-
-#         st.markdown('<div class="sidebar-title">OTHER</div>', unsafe_allow_html=True)
-#         if st.button("💳 Billing"): st.session_state.view = "Billing"
-#         if st.button("ℹ️ About"): st.session_state.view = "About"
-
-#         st.markdown('<div class="logout-container">', unsafe_allow_html=True)
-#         if st.button("🚪 Logout"): logout()
-#         st.markdown('</div>', unsafe_allow_html=True)
-
-# # =========================
-# # PAGES (Your Logic)
-# # =========================
-# def render_profile():
-#     st.title("User Profile")
-#     st.caption("Manage your personal information and learning preferences to get better AI recommendations.")
-#     data = st.session_state.profile_data
-#     disabled = not st.session_state.edit_mode
-
-#     c1, c2 = st.columns(2)
-#     with c1:
-#         name = st.text_input("Name", data["name"], disabled=disabled)
-#         qualification = st.text_input("Qualification", data.get("qualification", ""), disabled=disabled)
-#         dob = st.date_input("Date of Birth", value=data["dob"], disabled=disabled)
-#         username = st.text_input("Username", data["username"], disabled=disabled)
-
-#     with c2:
-#         email = st.text_input("Email ID", data["email"], disabled=disabled)
-#         mobile = st.text_input("Mobile", data["mobile"], disabled=disabled)
-#         country = st.selectbox("Country", ["USA", "India", "UK"], disabled=disabled)
-#         gender = st.radio("Gender", ["Male", "Female", "Other"], disabled=disabled)
-
-#     st.markdown("### Learning Profile")
-#     st.caption("Customize your learning goals and interests to receive personalized guidance.")
-#     col3, col4 = st.columns(2)
-#     with col3:
-#         goal = st.text_input("Learning Goal", data["goal"], disabled=disabled)
-#         level = st.selectbox("Skill Level", ["Beginner", "Intermediate", "Advanced"], 
-#                              index=["Beginner","Intermediate","Advanced"].index(data["level"]), disabled=disabled)
-#     with col4:
-#         interest = st.multiselect("Interested Domains", ["UI/UX", "AI", "Web Dev", "Data Science"], 
-#                                   default=data["interest"], disabled=disabled)
-
-#     st.markdown('<div class="separator"></div>', unsafe_allow_html=True)
-#     col1, col2, col3 = st.columns([13,1,1])
-#     with col2:
-#         if not st.session_state.edit_mode:
-#             if st.button("Edit"):
-#                 st.session_state.edit_mode = True
-#                 st.rerun()
-#     with col3:
-#         if st.session_state.edit_mode:
-#             if st.button("Save"):
-#                 add_activity("👤", "Profile Updated", "User updated profile details")
-#                 st.session_state.profile_data.update({
-#                     "name": name, "email": email, "qualification": qualification,
-#                     "mobile": mobile, "dob": dob, "country": country,
-#                     "username": username, "gender": gender, "goal": goal,
-#                     "level": level, "interest": interest,
-#                 })
-#                 st.session_state.edit_mode = False
-#                 st.success("Saved")
-#                 st.rerun()
-    
-# # SETTINGS
-# def render_settings():
-#     st.title("Settings")
-#     st.caption("Control your application preferences, notifications, and experience.")
-#     tab1, tab2, tab3, tab4 = st.tabs(
-#         ["Appearance", "Notifications", "General", "Help"]
-#     )
-#     with tab1:
-#         st.caption("Adjust how the platform looks and feels for your comfort.")
-#         st.subheader("Theme")
-#         st.radio("Select Theme", ["Light", "Dark", "System"])
-
-#         st.subheader("Font")
-#         st.selectbox("Font Family", ["Arial", "Roboto", "Poppins"])
-#         st.slider("Font Size", 10, 24, 14)
-        
-#     with tab2:
-#         st.caption("Choose what updates and alerts you want to receive.")
-#         st.toggle("Email Notifications")
-#         st.toggle("Course Updates")
-#         st.toggle("AI Recommendations")
-#     with tab3:
-#         st.subheader("General")
-#         st.selectbox("Language", ["English", "Hindi"])
-#         st.selectbox("Timezone", ["IST", "UTC"])
-#     with tab4:
-#         st.caption("Need assistance? Find answers or contact support.")
-#         st.title("Support Center")
-#         st.write("Get help with your account or report technical issues.")
-#         st.divider()
-
-#         st.subheader("Frequently Asked Questions")
-        
-#         with st.expander("How do I export my data?"):
-#             st.markdown("<p style='color: #FFFFFF; font-size: 16px;'>Go to the <b>Privacy</b> tab and click <b>Download My Data</b>.</p>", unsafe_allow_html=True)
-
-#         with st.expander("How is my AI Readiness score calculated?"):
-#             st.markdown("<p style='color: #FFFFFF; font-size: 16px;'>It is based on your completed topics vs. industry-standard skill benchmarks.</p>", unsafe_allow_html=True)
-
-#         st.divider()
-
-#         st.subheader("Report an Issue")
-        
-#         contact_col, info_col = st.columns([2, 1])
-        
-#         with contact_col:
-#             issue_type = st.selectbox("Issue Category", ["Bug Report", "Feature Request", "Account Access"], key="help_issue_type")
-#             message = st.text_area("Describe your issue", placeholder="Please provide details...", key="help_message")
-            
-#             btn_col1, btn_col2 = st.columns([2, 1])
-#             with btn_col2:
-#                 if st.button("Submit Report", type="primary", use_container_width=True):
-#                     if message:
-#                         st.success("Report submitted to the engineering team.")
-#                         st.toast("Ticket #4920 created.")
-#                     else:
-#                         st.error("Please describe the issue first.")
-
-#         with info_col:
-#             st.info("**Technical Support**")
-#             st.caption("Average response time: < 24 hours")
-#             st.write("---")
-#             st.write("📍 **Location**")
-#             st.caption("Bhusawal / Pune, India")
-    
-
-# # --- SECURITY VIEW ---
-# def render_security():
-#     st.title("Security & Sessions")
-#     st.caption("Protect your account by managing password, authentication, and active sessions.")
-#     st.divider()
-
-#     if "edit_mode" not in st.session_state:
-#         st.session_state.edit_mode = False
-#     if "two_fa_enabled" not in st.session_state:
-#         st.session_state.two_fa_enabled = False
-#     if "test_code" not in st.session_state:
-#         st.session_state.test_code = None
-
-#     st.subheader("Authentication")
-#     is_editing = st.session_state.edit_mode
-
-#     st.info("**Password Policy:** 8+ characters including uppercase, numbers, and symbols.")
-
-#     r1_col1, r1_col2 = st.columns(2)
-#     with r1_col1:
-#         current_pw = st.text_input("Current Password", type="password", disabled=not is_editing)
-#     with r1_col2:
-#         new_pw = st.text_input("New Password", type="password", disabled=not is_editing)
-    
-#     r2_col1, r2_col2 = st.columns(2)
-#     with r2_col1:
-#         confirm_pw = st.text_input("Confirm New Password", type="password", disabled=not is_editing)
-    
-#     btn_spacer, btn_col1, btn_col2 = st.columns([6, 2, 2])
-#     if not is_editing:
-#         with btn_col2:
-#             if st.button("Edit", key="edit_pw_btn", use_container_width=True):
-#                 st.session_state.edit_mode = True
-#                 st.rerun()
-#     else:
-#         with btn_col1:
-#             if st.button("Cancel", key="cancel_pw_btn", use_container_width=True):
-#                 st.session_state.edit_mode = False
-#                 st.rerun()
-#         with btn_col2:
-#             if st.button("Save", key="save_pw_btn", type="primary", use_container_width=True):
-#                 add_activity("🔐", "Password Changed", "User updated account password")
-#                 status = get_password_status(new_pw)
-#                 if new_pw == confirm_pw and all(status.values()):
-#                     st.session_state.edit_mode = False
-#                     st.success("Password Updated!")
-#                     st.rerun()
-#                 else:
-#                     st.session_state.pw_error = True
-
-#             if st.session_state.get("pw_error"):
-#                 st.error("Check requirements or password mismatch.")
-
-#     st.divider()
-
-#     st.subheader("Account Protection")
-    
-#     if not st.session_state.two_fa_enabled:
-#         if st.session_state.test_code is None:
-#             c1, c2 = st.columns([3, 1])
-#             with c1:
-#                 st.markdown("**Two-Factor Authentication (2FA)**")
-#                 st.caption("Secure your account with a secondary 6-digit verification code.")
-#             with c2:
-#                 if st.button("Enable", key="en_2fa", type="primary", use_container_width=True):
-#                     st.session_state.test_code = str(random.randint(100000, 999999))
-#                     st.rerun()
-#         else:
-#             st.info("📱 Scan this QR code with your Authenticator App.")
-#             qr_col, input_col = st.columns([1, 2])
-            
-#             with qr_col:
-#                 qr = qrcode.make(st.session_state.test_code)
-#                 buf = io.BytesIO()
-#                 qr.save(buf, format="PNG")
-#                 st.image(buf, width=150)
-            
-#             with input_col:
-#                 st.write("### Verify Code")
-#                 u_code = st.text_input("Enter 6-digit code", placeholder="000000")
-#                 v1, v2 = st.columns(2)
-#                 with v1:
-#                     if st.button("Verify", key="v_2fa", type="primary", use_container_width=True):
-#                         if u_code == st.session_state.test_code:
-#                             add_activity("🛡️", "2FA Enabled", "Two-factor authentication enabled")
-#                             st.session_state.two_fa_enabled = True
-#                             st.session_state.test_code = None
-#                             st.success("2FA Enabled!")
-#                             st.rerun()
-#                 with v2:
-#                     if st.button("Back", key="back_2fa", use_container_width=True):
-#                         st.session_state.test_code = None
-#                         st.rerun()
-#     else:
-#         c1, c2 = st.columns([3, 1])
-#         with c1:
-#             st.success("✅ **Two-Factor Authentication is Active**")
-#             st.caption("Your account is protected by an additional security layer.")
-#         with c2:
-#             if st.button("Disable", key="dis_2fa", use_container_width=True):
-#                 add_activity("⚠️", "2FA Disabled", "Two-factor authentication disabled")
-#                 st.session_state.two_fa_enabled = False
-#                 st.rerun()
-
-#     st.divider()
-
-#     st.subheader("Active Sessions")
-    
-#     with st.container():
-#         sc1, sc2 = st.columns([3, 1])
-#         with sc1:
-#             st.markdown("**Windows PC — Bhusawal, India**")
-#             st.markdown("<p style='color: #4CAF50; font-size: 14px; margin-top: -10px;'>Active now • Chrome Browser</p>", unsafe_allow_html=True)
-#         with sc2:
-#             st.button("Current", disabled=True, use_container_width=True)
-
-#     with st.container():
-#         st.caption("Other devices where your account is logged in. Revoke access if you don't recognize them.")
-#         so1, so2 = st.columns([3, 1])
-#         with so1:
-#             st.markdown("**Samsung Galaxy — Pune, India**")
-#             st.markdown("<p style='color: #FFFFFF; font-size: 14px; opacity: 0.7; margin-top: -10px;'>Last active: 45m ago</p>", unsafe_allow_html=True)
-#         with so2:
-#             if st.button("Revoke", key="rev_mob", use_container_width=True):
-#                 st.toast("Mobile session terminated.")
-
-#     st.divider()
-#     st.caption("🛡️ Security Tip: If you see a device you don't recognize, revoke it and change your password immediately.")
-
-# # CONNECTIONS
-# def render_connections(): 
-#     st.title("Connected Accounts") 
-#     st.caption("Manage your linked social and professional accounts. Link your external accounts for faster access and better integration.") 
-#     st.divider()
-#     def account_row(name, icon="🔗"):
-#         data = st.session_state.connections[name]
-#         is_connected = data["connected"]
-#         email = data["email"]
-
-#         col1, col2, col3 = st.columns([0.5, 3, 1.5])
-        
-#         with col1:
-#             st.markdown(f"### {icon}")
-            
-#         with col2:
-#             st.markdown(f"**{name}**")
-#             if is_connected:
-#                 st.caption(f"Linked as: {email}")
-#             else:
-#                 st.caption("Not connected")
-                
-#         with col3:
-#             if is_connected:
-#                 if st.button("Disconnect", key=f"btn_dis_{name}", use_container_width=True):
-#                     st.session_state.connections[name]["connected"] = False
-#                     st.session_state.connections[name]["email"] = None
-#                     add_activity("❌", f"{name} Disconnected", f"{name} account removed")
-#                     st.rerun()
-#             else:
-#                 if st.button("Connect", key=f"btn_con_{name}", type="primary", use_container_width=True):
-#                     st.session_state.connections[name]["connected"] = True
-#                     st.session_state.connections[name]["email"] = f"{name.lower()}@user.com"
-#                     add_activity("🔗", f"{name} Connected", f"{name} account linked")
-#                     st.rerun()
-
-#     account_row("Google", icon="🌐")
-#     account_row("GitHub", icon="💻")
-#     account_row("LinkedIn", icon="👔")
-
-# # --- PRIVACY VIEW ---
-# def render_privacy():
-#     st.title("Privacy & Data Control")
-#     st.caption("Control how your data is used and manage your privacy settings.")
-#     st.divider()
-
-#     st.subheader("Profile Visibility")
-#     with st.container():
-#         v_col1, v_col2 = st.columns([3, 1])
-#         with v_col1:
-#             st.markdown("**Public Profile**")
-#             st.caption("Allow others to see your projects, skills, and batches.")
-#         with v_col2:
-#             st.toggle("Public", value=True, key="visibility_toggle", label_visibility="collapsed")
-    
-#     with st.container():
-#         s_col1, s_col2 = st.columns([3, 1])
-#         with s_col1:
-#             st.markdown("**Search Engine Indexing**")
-#             st.caption("Allow Google to link to your profile and projects.")
-#         with s_col2:
-#             st.toggle("SEO", value=False, key="seo_toggle", label_visibility="collapsed")
-
-#     st.divider()
-
-#     st.subheader("Data & Personalization")
-#     with st.container():
-#         a1, a2 = st.columns([3, 1])
-#         with a1:
-#             st.markdown("**AI Personalization**")
-#             st.caption("Allow the system to use your activity to improve learning recommendations.")
-#         with a2:
-#             st.toggle("Enabled", value=True, key="ai_toggle", label_visibility="collapsed")
-
-#     st.divider()
-
-#     st.subheader("Your Personal Data")
-#     with st.container():
-#         d_col1, d_col2 = st.columns([3, 1])
-#         with d_col1:
-#             st.markdown("**Export Account Data**")
-#             st.caption("Download a copy of your account data anytime.")
-        
-#         with d_col2:
-#             try:
-#                 export_payload = {
-#                     "user_info": {
-#                         "name": st.session_state.profile_data.get("name", "User"),
-#                         "degree": st.session_state.profile_data.get("qualification", "N/A"),
-#                         "batch": "2026",
-#                         "college": "SSGBCOET, Bhusawal"
-#                     },
-#                     "security_settings": {
-#                         "two_factor_enabled": st.session_state.get("two_fa_enabled", False),
-#                         "profile_visibility": "Public" if st.session_state.get("visibility_toggle") else "Private"
-#                     },
-#                     "projects": ["ChatStream AI", "Movie Rec System", "Google Play EDA"]
-#                 }
-#                 json_data = json.dumps(export_payload, indent=4)
-#                 pdf_file = generate_pdf(export_payload)
-
-#                 download_clicked = st.download_button(
-#                     label="📥 Download PDF",
-#                     data=pdf_file,
-#                     file_name="user_data.pdf",
-#                     mime="application/pdf",
-#                     use_container_width=True
-#                 )
-
-#                 if download_clicked:
-#                     add_activity("📄", "Data Exported", "User downloaded PDF report")
-#             except Exception as e:
-#                 st.error("Export Error")
-
-#     st.divider()
-
-#     st.subheader("Danger Zone")
-#     with st.container():
-#         del_col1, del_col2 = st.columns([3, 1])
-#         with del_col1:
-#             st.markdown("**Delete Account**")
-#             st.caption("Permanently remove your account and all associated data. This cannot be undone.")
-#         with del_col2:
-#             if st.button("Delete", type="primary", use_container_width=True):
-#                 st.session_state.show_delete_warning = True
-
-#     if st.session_state.get("show_delete_warning"):
-#         st.warning("⚠️ Are you sure? This will erase your account data.")
-#         c_col1, c_col2, c_spacer = st.columns([1, 1, 2])
-#         with c_col1:
-#             if st.button("Confirm", type="primary", key="final_del", use_container_width=True):
-#                 add_activity("🗑️", "Account Deleted", "User permanently deleted account")
-#                 st.success("Account deleted.")
-#                 st.rerun()
-#         with c_col2:
-#             if st.button("Cancel", key="cancel_del", use_container_width=True):
-#                 st.session_state.show_delete_warning = False
-#                 st.rerun()
-
-# # --- PROFILE INSIGHTS VIEW ---
-# def render_insights():
-#     st.title("Profile Insights")
-#     st.caption("Track your learning progress and understand your skill development.")
-#     st.divider()
-
-#     if "insights_data" not in st.session_state:
-#         st.session_state.insights_data = None
-
-#     def load_default_insights():
-#         return {
-#             "metrics": {
-#                 "completed": 0,
-#                 "in_progress": 0,
-#                 "readiness": "0%"
-#             },
-#             "suggestions": []
-#         }
-
-#     insights_data = st.session_state.insights_data or load_default_insights()
-
-#     metrics = insights_data.get("metrics", {})
-#     suggestions = insights_data.get("suggestions", [])
-
-#     m1, m2, m3 = st.columns(3)
-#     with m1:
-#         st.metric("Topics Completed", metrics.get("completed", 0))
-#     with m2:
-#         st.metric("In Progress", metrics.get("in_progress", 0))
-#     with m3:
-#         st.metric("Skill Readiness", metrics.get("readiness", "0%"))
-
-#     st.divider()
-
-#     st.subheader("Overall Learning Progress")
-
-#     completed = int(metrics.get("completed", 0))
-#     in_progress = int(metrics.get("in_progress", 0))
-#     total = completed + in_progress
-
-#     progress_val = int((completed / total) * 100) if total > 0 else 0
-
-#     col_p1, col_p2 = st.columns([4, 1])
-#     with col_p1:
-#         st.progress(progress_val / 100)
-#     with col_p2:
-#         st.write(f"**{progress_val}%**")
-
-#     st.divider()
-
-#     st.subheader("Personalized Recommendations")
-#     st.caption("Based on your current progress, here are some insights to help you focus on the right areas.")
-
-#     def insight_card(title, text, type="info"):
-#         if type == "info":
-#             st.info(f"**{title}**")
-#         elif type == "success":
-#             st.success(f"**{title}**")
-#         elif type == "warning":
-#             st.warning(f"**{title}**")
-
-#         st.markdown(f"""
-#             <p style='color: #FFFFFF; font-size: 16px; margin-top: -10px; margin-bottom: 20px;'>
-#                 {text}
-#             </p>
-#         """, unsafe_allow_html=True)
-
-#     if suggestions:
-#         cols = st.columns(2)
-#         for i, item in enumerate(suggestions):
-#             with cols[i % 2]:
-#                 insight_card(
-#                     item.get("title", ""),
-#                     item.get("text", ""),
-#                     item.get("type", "info")
-#                 )
-#     else:
-#         st.info("No insights available yet.")
-
-#     st.divider()
-#     _, q_col = st.columns([3, 1])
-#     with q_col:
-#         if st.button("Refresh Analysis", use_container_width=True):
-#             st.toast("Fetching latest backend insights...")
-#             st.session_state.insights_data = {
-#                 "metrics": {
-#                     "completed": 12,
-#                     "in_progress": 5,
-#                     "readiness": "85%"
-#                 },
-#                 "suggestions": [
-#                     {"title": "Primary Focus", "text": "Build real projects.", "type": "info"},
-#                     {"title": "Consistency", "text": "You are doing well.", "type": "success"},
-#                 ]
-#             }
-#             st.rerun()
-
-# # --- AI INSIGHTS VIEW ---
-# def render_ai():
-#     st.title("AI Insights & Recommendations")
-#     st.caption("Smart recommendations generated by EchoAI based on your profile and skill level.")
-#     st.divider()
-
-#     profile = st.session_state.profile_data
-#     goal = profile.get("goal", "Technical Role")
-#     level = profile.get("level", "Beginner")
-#     name = profile.get("name", "User")
-
-#     # ✅ Status display
-#     c1, c2 = st.columns(2)
-#     with c1:
-#         st.info(f"**Current Goal:** {goal}")
-#     with c2:
-#         st.success(f"**Skill Level:** {level}")
-
-#     st.divider()
-#     st.subheader("🚀 Smart Recommendations")
-
-#     # ✅ Initialize AI insight state
-#     if "ai_insights" not in st.session_state:
-#         st.session_state.ai_insights = None
-#     if "ai_insights_loading" not in st.session_state:
-#         st.session_state.ai_insights_loading = False
-
-#     # ✅ Generate button — calls EchoAI via backend
-#     _, btn_col = st.columns([3, 1])
-#     with btn_col:
-#         if st.button("Generate New Insights", use_container_width=True):
-#             st.session_state.ai_insights_loading = True
-#             st.session_state.ai_insights = None
-
-#             # ✅ Build prompt from profile
-#             prompt = f"""
-# You are an AI learning coach. Based on the following student profile, give 4 smart, actionable learning recommendations.
-
-# Student Profile:
-# - Name: {name}
-# - Goal: {goal}
-# - Skill Level: {level}
-# - Interests: {', '.join(profile.get('interest', [])) or 'Not specified'}
-
-# Return exactly 4 recommendations as a JSON array with this format:
-# [
-#   {{"title": "Short Title", "text": "Detailed advice here.", "type": "info"}},
-#   ...
-# ]
-# Types can be: info, success, warning
-# Return ONLY the JSON array, no extra text.
-# """
-#             try:
-#                 token = st.session_state.get("token")
-#                 headers = {"Authorization": f"Bearer {token}"}
-
-#                 # ✅ Call EchoAI backend
-#                 res = requests.post(
-#                     "http://localhost:8000/chat/",
-#                     json={
-#                         "messages": [{"role": "user", "content": prompt}],
-#                         "speed": "default"
-#                     },
-#                     headers=headers,
-#                     timeout=60
-#                 )
-
-#                 if res.status_code == 200:
-#                     raw = res.json().get("response", "")
-#                     # Clean JSON from response
-#                     raw = raw.strip()
-#                     if "```" in raw:
-#                         raw = raw.split("```")[1]
-#                         if raw.startswith("json"):
-#                             raw = raw[4:]
-#                     suggestions = json.loads(raw.strip())
-#                     st.session_state.ai_insights = suggestions
-#                     add_activity("🤖", "AI Insights Generated", "EchoAI generated new learning recommendations")
-#                 else:
-#                     st.error("Failed to get AI insights. Try again.")
-
-#             except Exception as e:
-#                 st.error(f"AI Error: {str(e)}")
-
-#             st.session_state.ai_insights_loading = False
-#             st.rerun()
-
-#     # ✅ Show insights if available
-#     if st.session_state.ai_insights:
-#         suggestions = st.session_state.ai_insights
-
-#         def ai_card(title, text, type="info"):
-#             if type == "info": st.info(f"**{title}**")
-#             elif type == "success": st.success(f"**{title}**")
-#             elif type == "warning": st.warning(f"**{title}**")
-#             st.markdown(f"""
-#                 <p style='color: #FFFFFF; font-size: 16px; margin-top: -10px; margin-bottom: 20px;'>
-#                     {text}
-#                 </p>
-#             """, unsafe_allow_html=True)
-
-#         col1, col2 = st.columns(2)
-#         for i, s in enumerate(suggestions):
-#             with col1 if i % 2 == 0 else col2:
-#                 ai_card(
-#                     title=s.get("title", ""),
-#                     text=s.get("text", ""),
-#                     type=s.get("type", "info")
-#                 )
-#     else:
-#         # ✅ Fallback static suggestions based on level
-#         if level == "Beginner":
-#             static = [
-#                 {"title": "Focus: Fundamentals", "text": "Build strong basics in Python, logic building, and problem-solving.", "type": "info"},
-#                 {"title": "Focus: Guided Learning", "text": "Follow structured courses instead of random tutorials.", "type": "success"},
-#                 {"title": "Action: Practice", "text": "Solve basic problems daily to build confidence.", "type": "warning"},
-#                 {"title": "Core Strategy", "text": "Consistency is more important than complexity at this stage.", "type": "info"}
-#             ]
-#         elif level == "Intermediate":
-#             static = [
-#                 {"title": "Focus: Portfolio Projects", "text": "Move beyond basic scripts. Build end-to-end applications.", "type": "info"},
-#                 {"title": "Focus: Real-world Thinking", "text": "Start understanding system design and real use-cases.", "type": "success"},
-#                 {"title": "Action: Practical Tasks", "text": "Work on debugging and data cleaning tasks.", "type": "warning"},
-#                 {"title": "Core Strategy", "text": "Shift from theory to practical execution.", "type": "info"}
-#             ]
-#         else:
-#             static = [
-#                 {"title": "Focus: Specialization", "text": "Choose a niche like AI, Backend, or Data Engineering.", "type": "info"},
-#                 {"title": "Focus: Scaling Systems", "text": "Work on scalable architectures and optimization.", "type": "success"},
-#                 {"title": "Action: Open Source", "text": "Contribute to real-world projects.", "type": "warning"},
-#                 {"title": "Core Strategy", "text": "Build authority in one domain instead of being generic.", "type": "info"}
-#             ]
-
-#         def ai_card(title, text, type="info"):
-#             if type == "info": st.info(f"**{title}**")
-#             elif type == "success": st.success(f"**{title}**")
-#             elif type == "warning": st.warning(f"**{title}**")
-#             st.markdown(f"""
-#                 <p style='color: #FFFFFF; font-size: 16px; margin-top: -10px; margin-bottom: 20px;'>
-#                     {text}
-#                 </p>
-#             """, unsafe_allow_html=True)
-
-#         col1, col2 = st.columns(2)
-#         with col1:
-#             ai_card(**static[0])
-#             ai_card(**static[2])
-#         with col2:
-#             ai_card(**static[1])
-#             ai_card(**static[3])
-
-#         st.caption("💡 Click **Generate New Insights** above to get personalized AI recommendations from EchoAI.")
-
-# # --- ACTIVITY LOG VIEW ---
-# def render_activity():
-#     st.title("Activity Log")
-#     st.caption("A record of your recent actions and account activity.")
-#     st.divider()
-
-#     if "activity_logs" not in st.session_state:
-#         st.session_state.activity_logs = []
-
-#     logs = st.session_state.activity_logs
-
-#     if len(logs) == 0:
-#         st.info("No activity yet. Your actions will appear here.")
-#         return
-
-#     for i, log in enumerate(reversed(logs)):
-#         with st.container():
-#             col_icon, col_info, col_time = st.columns([0.5, 3, 1.5])
-
-#             with col_icon:
-#                 st.markdown(f"### {log['icon']}")
-
-#             with col_info:
-#                 st.markdown(f"**{log['event']}**")
-#                 st.markdown(
-#                     f"<p style='color: #FFFFFF; font-size: 15px; opacity: 0.9; margin-top: -10px;'>{log['detail']}</p>",
-#                     unsafe_allow_html=True
-#                 )
-
-#             with col_time:
-#                 st.markdown(
-#                     f"<p style='text-align: right; color: #AAAAAA; font-style: italic; font-size: 13px;'>{log['time']}</p>",
-#                     unsafe_allow_html=True
-#                 )
-
-#         if i < len(logs) - 1:
-#             st.divider()
-
-#     st.divider()
-#     col1, col2 = st.columns([2, 1])
-
-#     with col2:
-#         if st.button("Refresh Logs", use_container_width=True):
-#             st.toast("Fetching latest logs...")
-#             st.rerun()
-
-#     with col1:
-#         if st.button("Clear Logs", use_container_width=True):
-#             st.session_state.activity_logs = []
-#             st.toast("Logs cleared")
-#             st.rerun()
-
-# def add_activity(icon, event, detail):
-#     if "activity_logs" not in st.session_state:
-#         st.session_state.activity_logs = []
-
-#     st.session_state.activity_logs.append({
-#         "icon": icon,
-#         "event": event,
-#         "detail": detail,
-#         "time": datetime.now().strftime("%d %b, %I:%M %p")
-#     })
-
-# # --- BILLING / EXPLORE PLANS VIEW ---
-# def render_billing():
-#     st.markdown("""
-#         <style>
-#         .plan-card {
-#             background-color: #0E1117;
-#             border: 1px solid #30363D;
-#             border-radius: 15px;
-#             padding: 30px;
-#             height: 550px;
-#             transition: transform 0.3s;
-#         }
-#         .plan-card:hover {
-#             border-color: #58A6FF;
-#             transform: translateY(-5px);
-#             box-shadow: 0 4px 20px rgba(88, 166, 255, 0.2);
-#         }
-#         .price-text {
-#             font-size: 36px;
-#             font-weight: bold;
-#             margin-bottom: 0px;
-#         }
-#         .feature-list {
-#             font-size: 14px;
-#             color: #8B949E;
-#             margin-top: 20px;
-#             line-height: 1.8;
-#         }
-#         </style>
-#     """, unsafe_allow_html=True)
-
-#     st.markdown("<h1 style='text-align: center; font-size: 50px;'>Explore plans</h1>", unsafe_allow_html=True)
-#     st.markdown("<p style='text-align: center; color: #8B949E;'>Choose the plan that best fits your learning journey and unlock powerful AI features to accelerate your growth.</p>", unsafe_allow_html=True)
-#     st.write("##")
-
-#     col1, col2, col3 = st.columns(3)
-
-#     # --- FREE PLAN ---
-#     with col1:
-#         st.markdown(f"""
-#             <div class="plan-card">
-#                 <h3>🌱</h3>
-#                 <h2>Free</h2>
-#                 <p style="color: #8B949E;">Basic access for students</p>
-#                 <p class="price-text">₹0</p>
-#                 <p style="color: #8B949E; font-size: 12px;">Free for everyone</p>
-#                 <br>
-#                 <div class="feature-list">
-#                     ✓ Course-based AI Assistance<br>
-#                     ✓ Basic AI Insights<br>
-#                     ✓ Community Support<br>
-#                     ✓ Limited Queries per Day 
-#                 </div>
-#             </div>
-#         """, unsafe_allow_html=True)
-#         if st.button("Current Plan", key="free_btn", use_container_width=True, disabled=True):
-#             pass
-
-#     # --- PRO PLAN ---
-#     with col2:
-#         st.markdown(f"""
-#             <div class="plan-card">
-#                 <h3>🌿</h3>
-#                 <h2>Pro</h2>
-#                 <p style="color: #8B949E;">For career growth</p>
-#                 <p class="price-text">₹499</p>
-#                 <p style="color: #8B949E; font-size: 12px;">Per month billed annually</p>
-#                 <br>
-#                 <div class="feature-list">
-#                     ✓ Everything in Free, plus:<br>
-#                     ✓ Access to Neuxa AI (Limited Usage)<br>
-#                     ✓ Advanced Learning Insights<br>
-#                     ✓ Priority AI Support<br>
-#                     ✓ Increased Query Limits  
-#                 </div>
-#             </div>
-#         """, unsafe_allow_html=True)
-#         if st.button("Upgrade to Pro", key="pro_btn", type="primary", use_container_width=True):
-#             st.toast("Connecting to Secure Payment...")
-#             add_activity("💳", "Plan Upgrade", "User upgraded to Pro plan")
-#             st.session_state.view = "Pro_Details"
-#             st.rerun()
-
-#     # --- MAX PLAN ---
-#     with col3:
-#         st.markdown(f"""
-#             <div class="plan-card">
-#                 <h3>🌳</h3>
-#                 <h2>Max</h2>
-#                 <p style="color: #8B949E;">For power users</p>
-#                 <p class="price-text">₹999</p>
-#                 <p style="color: #8B949E; font-size: 12px;">Per month billed monthly</p>
-#                 <br>
-#                 <div class="feature-list">
-#                     ✓ Everything in Pro, plus:<br>
-#                     ✓ Full Access to All AI Systems<br>
-#                     ✓ Early Access Features<br>
-#                     ✓ Early Access to New AI Features<br>
-#                     ✓ Unlimited Neuxa AI Usage  
-#                 </div>
-#             </div>
-#         """, unsafe_allow_html=True)
-#         if st.button("Try Max", key="max_btn", use_container_width=True):
-#             st.toast("Checking Max availability...")
-#             add_activity("💳", "Plan Upgrade", "User upgraded to max plan")
-#             st.session_state.view = "Max_Details"
-#             st.rerun()
-
-#     st.write("##")
-#     st.divider()
-#     st.caption("Looking for enterprise solutions? Contact support.")
-
-# def render_pro_payment():
-#     st.title("💳 Pro Plan Checkout")
-#     st.caption("Secure payment interface")
-
-#     st.divider()
-
-#     st.subheader("Plan Summary")
-#     st.info("Pro Plan – ₹499/month")
-
-#     st.subheader("Billing Details")
-#     # ✅ Fix — prefill from session state
-#     name = st.text_input("Full Name", value=st.session_state.profile_data.get("name", ""))
-#     email = st.text_input("Email", value=st.session_state.profile_data.get("email", ""))
-
-#     st.subheader("Payment Method")
-#     method = st.radio("Choose method", ["UPI", "Card", "Net Banking"])
-
-#     if method == "UPI":
-#         st.text_input("Enter UPI ID", placeholder="example@upi")
-
-#     elif method == "Card":
-#         st.text_input("Card Number")
-#         col1, col2 = st.columns(2)
-#         with col1:
-#             st.text_input("Expiry")
-#         with col2:
-#             st.text_input("CVV")
-
-#     elif method == "Net Banking":
-#         st.selectbox("Select Bank", ["SBI", "HDFC", "ICICI", "Axis"])
-
-#     st.divider()
-
-#     col1, col2 = st.columns(2)
-
-#     with col1:
-#         if st.button("⬅ Back", use_container_width=True):
-#             st.session_state.view = "Billing"
-#             st.rerun()
-
-#     with col2:
-#         if st.button("💳 Pay ₹499", type="primary", use_container_width=True):
-#             add_activity("💳", "Payment Success", "User upgraded to Pro")
-#             st.success("Payment Successful! Pro Plan Activated 🎉")
-#             st.session_state.plan = "Pro"
-#             st.rerun()
-            
-# def render_max_payment():
-#     st.title("🚀 Max Plan Checkout")
-#     st.caption("Secure payment interface")
-
-#     st.divider()
-
-#     st.subheader("Plan Summary")
-#     st.success("Max Plan – ₹999/month")
-
-#     st.subheader("Billing Details")
-#     # ✅ Fix — prefill from session state
-#     name = st.text_input("Full Name", value=st.session_state.profile_data.get("name", ""))
-#     email = st.text_input("Email", value=st.session_state.profile_data.get("email", ""))
-
-#     st.subheader("Payment Method")
-#     method = st.radio("Choose method", ["UPI", "Card", "Net Banking"])
-
-#     if method == "UPI":
-#         st.text_input("Enter UPI ID")
-
-#     elif method == "Card":
-#         st.text_input("Card Number")
-#         col1, col2 = st.columns(2)
-#         with col1:
-#             st.text_input("Expiry")
-#         with col2:
-#             st.text_input("CVV")
-
-#     elif method == "Net Banking":
-#         st.selectbox("Select Bank", ["SBI", "HDFC", "ICICI", "Axis"])
-
-#     st.divider()
-
-#     col1, col2 = st.columns(2)
-
-#     with col1:
-#         if st.button("⬅ Back", use_container_width=True):
-#             st.session_state.view = "Billing"
-#             st.rerun()
-
-#     with col2:
-#         if st.button("🚀 Pay ₹999", type="primary", use_container_width=True):
-#             add_activity("💳", "Payment Success", "User upgraded to Max")
-#             st.success("Payment Successful! Max Plan Activated 🎉")
-#             st.session_state.plan = "Max"
-#             st.rerun()
-
-# # --- ABOUT VIEW ---
-# def render_about():
-#     st.markdown("""
-#         <style>
-#         .about-container {
-#             text-align: center;
-#             padding: 40px;
-#             background-color: #0E1117;
-#             border: 1px solid #30363D;
-#             border-radius: 20px;
-#             margin-bottom: 25px;
-#         }
-#         .tech-badge {
-#             display: inline-block;
-#             padding: 5px 12px;
-#             margin: 5px;
-#             background-color: #161B22;
-#             border: 1px solid #58A6FF;
-#             border-radius: 10px;
-#             color: #58A6FF;
-#             font-size: 13px;
-#             font-weight: 500;
-#         }
-#         </style>
-#     """, unsafe_allow_html=True)
-
-#     with st.container():
-#         st.markdown("""
-#             <div class="about-container">
-#                 <h1 style='font-size: 45px; margin-bottom: 0px;'>AI Learning Assistant</h1>
-#                 <p style='color: #8B949E; font-size: 18px;'>Empowering 2026 Batch Students with Data-Driven Insights</p>
-#                 <br>
-#                 <div style='display: flex; justify-content: center; flex-wrap: wrap;'>
-#                     <span class="tech-badge">Python 3.10</span>
-#                     <span class="tech-badge">Streamlit</span>
-#                     <span class="tech-badge">FastAPI</span>
-#                     <span class="tech-badge">v1.0.2-stable</span>
-#                 </div>
-#             </div>
-#         """, unsafe_allow_html=True)
-
-#     col1, col2 = st.columns(2)
-
-#     with col1:
-#         st.subheader("🎯 Project Mission")
-#         st.markdown(f"""
-#             <p style='color: #FFFFFF; font-size: 16px; opacity: 0.9;'>
-#                 To bridge the gap between academic theory and industry readiness. 
-#                 This assistant analyzes learning patterns to suggest real-world 
-#                 SRE and AI workflows.
-#             </p>
-#         """, unsafe_allow_html=True)
-
-#     with col2:
-#         st.subheader("🛡️ Security & Privacy")
-#         st.markdown(f"""
-#             <p style='color: #FFFFFF; font-size: 16px; opacity: 0.9;'>
-#                 Built with industry-standard security protocols, featuring 2FA, 
-#                 Audit Logging, and transparent data management.
-#             </p>
-#         """, unsafe_allow_html=True)
-
-#     st.divider()
-
-#     f_col1, f_col2, f_col3 = st.columns([1, 2, 1])
-#     with f_col2:
-#         st.markdown("<p style='text-align: center; color: #8B949E;'>Developed by NexaAI Teams<br>© 2026 AI Learning Hub</p>", unsafe_allow_html=True)
-#         st.button("View Source on GitHub", use_container_width=True)
-
-#     if st.button("Check for Updates", use_container_width=True):
-#         st.toast("You are using the latest version!")
-
-# def init_profile_state():
-#     if "profile_data" not in st.session_state:
-#         st.session_state.profile_data = load_default_profile()
-        
-#     if "connections" not in st.session_state:
-#         st.session_state.connections = {
-#             "Google": {"connected": False, "email": ""},
-#             "GitHub": {"connected": False, "email": ""},
-#             "LinkedIn": {"connected": False, "email": ""}
-#         }
-#     if "edit_mode" not in st.session_state: 
-#         st.session_state.edit_mode = False
-#     if "view" not in st.session_state:
-#         st.session_state.view = "Profile"
-
-        
-# def render_app():
-#     inject_profile_styles()
-#     init_profile_state()
-#     render_topbar()
-#     render_sidebar()
-
-#     ROUTES = {
-#         "Profile": render_profile,
-#         "Settings": render_settings,
-#         "Security": render_security,
-#         "Connections": render_connections,
-#         "Privacy": render_privacy,
-#         "Insights": render_insights,
-#         "AI": render_ai,
-#         "Activity": render_activity,
-#         "Billing": render_billing,
-#         "About": render_about,
-#         "Pro_Details": render_pro_payment,
-#         "Max_Details": render_max_payment,
-#     }
-
-#     ROUTES.get(st.session_state.view, render_profile)()
-
-# def main():
-#     st.set_page_config(
-#         layout="wide",
-#         page_title="Streamlit SaaS UI",
-#         initial_sidebar_state="expanded"
-#     )
-#     render_app()    
-
-# if __name__ == "__main__":    
-#     main()
-
-
 import streamlit as st
 from datetime import datetime, date
 import re
@@ -1263,9 +6,11 @@ import io
 import random
 import json
 import requests
-from datetime import datetime
+from datetime import datetime, date
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
+import os
+from PIL import Image
 # =========================
 # PROFESSIONAL CSS (Updated)
 # =========================
@@ -1305,7 +50,7 @@ div.stButton > button {
     transition: all 0.3s ease;
     padding: 8px 12px; /* Added more horizontal padding for better look */
     margin-top: 1px;
-    margin-left: 10px; /* Aligns it with the sidebar text/icons */
+    margin-left: 1px; /* Aligns it with the sidebar text/icons */
 }
     /* Professional Hover Effect */
     div.stButton > button:hover {
@@ -1355,39 +100,113 @@ div.stButton > button {
 
 
 def generate_pdf(data):
-    buffer = io.BytesIO()
+    import io
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet
 
+    buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer)
     styles = getSampleStyleSheet()
 
     content = []
 
-    # Title
+    # -------- SAFE EXTRACTION --------
+    user_info = data.get("user_info", {})
+    security = data.get("security_settings", {})
+    projects = data.get("projects", [])
+
+    # -------- TITLE --------
     content.append(Paragraph("User Data Export", styles["Title"]))
     content.append(Spacer(1, 10))
 
-    # User Info
-    content.append(Paragraph(f"Name: {data['user_info']['name']}", styles["Normal"]))
-    content.append(Paragraph(f"Degree: {data['user_info']['degree']}", styles["Normal"]))
-    content.append(Paragraph(f"Batch: {data['user_info']['batch']}", styles["Normal"]))
+    # -------- USER INFO --------
+    content.append(Paragraph(f"Name: {user_info.get('name', 'N/A')}", styles["Normal"]))
+
+    # 🔴 FIX: degree → qualification
+    content.append(Paragraph(f"Qualification: {user_info.get('qualification', 'N/A')}", styles["Normal"]))
+
+    content.append(Paragraph(f"Batch: {user_info.get('batch', 'N/A')}", styles["Normal"]))
     content.append(Spacer(1, 10))
 
-    # Security
+    # -------- SECURITY --------
     content.append(Paragraph("Security Settings", styles["Heading2"]))
-    content.append(Paragraph(f"2FA Enabled: {data['security_settings']['two_factor_enabled']}", styles["Normal"]))
-    content.append(Paragraph(f"Visibility: {data['security_settings']['profile_visibility']}", styles["Normal"]))
+    content.append(Paragraph(
+        f"2FA Enabled: {security.get('two_factor_enabled', 'N/A')}",
+        styles["Normal"]
+    ))
+    content.append(Paragraph(
+        f"Visibility: {security.get('profile_visibility', 'N/A')}",
+        styles["Normal"]
+    ))
     content.append(Spacer(1, 10))
 
-    # Projects
+    # -------- PROJECTS --------
     content.append(Paragraph("Projects", styles["Heading2"]))
-    for proj in data["projects"]:
-        content.append(Paragraph(f"- {proj}", styles["Normal"]))
 
+    if projects:
+        for proj in projects:
+            content.append(Paragraph(f"- {proj}", styles["Normal"]))
+    else:
+        content.append(Paragraph("No projects available", styles["Normal"]))
+
+    # -------- BUILD --------
     doc.build(content)
     buffer.seek(0)
 
     return buffer
+def apply_theme():
+    theme = st.session_state.get("app_theme", "Dark")
 
+    theme_styles = {
+        "Dark": """
+            .stApp { background-color: #0a0a0a !important; color: #f3f4f6 !important; }
+            [data-testid="stSidebar"] { background-color: #0e0e0e !important; }
+            .block-container { background-color: #0a0a0a !important; }
+        """,
+
+        "Light": """
+            .stApp { background-color: #f5f5f0 !important; color: #1a1a1a !important; }
+            [data-testid="stSidebar"] { background-color: #ebebeb !important; }
+            .block-container { background-color: #f5f5f0 !important; }
+
+            p, h1, h2, h3, h4, label, span {
+                color: #1a1a1a !important;
+            }
+        """,
+
+        "Midnight Blue": """
+            .stApp { background-color: #0d1117 !important; color: #c9d1d9 !important; }
+            [data-testid="stSidebar"] { background-color: #161b22 !important; }
+            .block-container { background-color: #0d1117 !important; }
+        """
+    }
+
+    st.markdown(
+        f"<style>{theme_styles[theme]}</style>",
+        unsafe_allow_html=True
+    )
+def apply_font():
+    font = st.session_state.get("app_font", "Inter")
+    size = st.session_state.get("app_font_size", 15)
+
+    google_fonts = ["Inter", "Roboto", "Poppins"]
+
+    font_import = ""
+    if font in google_fonts:
+        font_import = f"""
+        @import url('https://fonts.googleapis.com/css2?family={font.replace(" ", "+")}:wght@300;400;500;600&display=swap');
+        """
+
+    st.markdown(f"""
+        <style>
+        {font_import}
+
+        .stApp, .stApp p, .stApp div, .stApp span, .stApp label {{
+            font-family: '{font}', sans-serif !important;
+            font-size: {size}px !important;
+        }}
+        </style>
+    """, unsafe_allow_html=True)
 # =========================
 # SESSION STATE (Dynamic Ready)
 # =========================
@@ -1403,6 +222,8 @@ def load_default_profile():
         "country": "India",
         "username": "",
         "gender": "Other",
+        "github_url": "",
+        "linkedin_url": "",
         "goal": "",
         "level": "Beginner",
         "interest": [],
@@ -1430,17 +251,7 @@ def get_password_status(password):
         "Uppercase letter": bool(re.search(r"[A-Z]", password)),
     }
 
-# =========================
-# TOP RIGHT PROFILE MENU
-# =========================
-def render_topbar():
-    with st.popover("👤"):
-        st.markdown(f"**{st.session_state.profile_data['name']}**")
-        if st.button("View Profile", use_container_width=True):
-            st.session_state.view = "Profile"
-            st.rerun()
-        if st.button("Logout", type="secondary", use_container_width=True):
-            logout()
+
 
 # =========================
 # SIDEBAR (Your Logic)
@@ -1448,7 +259,14 @@ def render_topbar():
 def render_sidebar():
     with st.sidebar:
         data = st.session_state.profile_data
-        initial = data["name"][0]
+        # Locate line 1453 in your sidebar code
+        name = data.get("name", "")
+
+        # Use the first letter if name exists, otherwise use a default like "U"
+        if name and len(name) > 0:
+            initial = name[0].upper()
+        else:
+            initial = "U"
 
         st.markdown(f"""
         <div style="display:flex; align-items:center; gap:10px; padding-left:10px;">
@@ -1466,23 +284,23 @@ def render_sidebar():
             st.rerun()
         st.markdown('<div class="sidebar-title">ACCOUNT</div>', unsafe_allow_html=True)
 
-        if st.button("👤 Profile"): st.session_state.view = "Profile"
-        if st.button("⚙️ Settings"): st.session_state.view = "Settings"
-        if st.button("🔐 Security"): st.session_state.view = "Security"
-        if st.button("🔗 Connected Accounts"): st.session_state.view = "Connections"
-        if st.button("🛡️ Privacy"): st.session_state.view = "Privacy"
+        if st.button("Profile"): st.session_state.view = "Profile"
+        if st.button("Settings"): st.session_state.view = "Settings"
+        if st.button("Security"): st.session_state.view = "Security"
+        if st.button("Connected Accounts"): st.session_state.view = "Connections"
+        if st.button("Privacy"): st.session_state.view = "Privacy"
 
         st.markdown('<div class="sidebar-title">INSIGHTS</div>', unsafe_allow_html=True)
-        if st.button("📊 Profile Insights"): st.session_state.view = "Insights"
-        if st.button("🤖 AI Insights"): st.session_state.view = "AI"
-        if st.button("🕒 Activity Log"): st.session_state.view = "Activity"
+        if st.button("Profile Insights"): st.session_state.view = "Insights"
+        if st.button("AI Insights"): st.session_state.view = "AI"
+        if st.button("Activity Log"): st.session_state.view = "Activity"
 
         st.markdown('<div class="sidebar-title">OTHER</div>', unsafe_allow_html=True)
-        if st.button("💳 Billing"): st.session_state.view = "Billing"
-        if st.button("ℹ️ About"): st.session_state.view = "About"
+        if st.button("Billing"): st.session_state.view = "Billing"
+        if st.button("About"): st.session_state.view = "About"
 
         st.markdown('<div class="logout-container">', unsafe_allow_html=True)
-        if st.button("🚪 Logout"): logout()
+        if st.button("Logout"): logout()
         st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================
@@ -1491,52 +309,103 @@ def render_sidebar():
 def render_profile():
     st.title("User Profile")
     st.caption("Manage your personal information and learning preferences to get better AI recommendations.")
-    data = st.session_state.profile_data
+
+    data     = st.session_state.profile_data
     disabled = not st.session_state.edit_mode
+
+    # ✅ Initialize temp edit state ONCE when Edit is clicked
+    if st.session_state.edit_mode and "edit_temp" not in st.session_state:
+        st.session_state.edit_temp = data.copy()
+
+    # ✅ Use temp state while editing, real data when viewing
+    d = st.session_state.edit_temp if st.session_state.edit_mode else data
 
     c1, c2 = st.columns(2)
     with c1:
-        name = st.text_input("Name", data["name"], disabled=disabled)
-        qualification = st.text_input("Qualification", data.get("qualification", ""), disabled=disabled)
-        dob = st.date_input("Date of Birth", value=data["dob"], disabled=disabled)
-        username = st.text_input("Username", data["username"], disabled=disabled)
+        name          = st.text_input("Name",          d["name"],                      disabled=disabled)
+        username      = st.text_input("Username",       d["username"],                  disabled=disabled)
+        qualification = st.text_input("Qualification",  d.get("qualification", ""),     disabled=disabled)
+        dob           = st.date_input("Date of Birth",  value=d["dob"],                 disabled=disabled)
+        gender        = st.radio("Gender", ["Male", "Female", "Other"],
+                                 index=["Male","Female","Other"].index(d.get("gender","Other")),
+                                 disabled=disabled)
 
     with c2:
-        email = st.text_input("Email ID", data["email"], disabled=disabled)
-        mobile = st.text_input("Mobile", data["mobile"], disabled=disabled)
-        country = st.selectbox("Country", ["USA", "India", "UK"], disabled=disabled)
-        gender = st.radio("Gender", ["Male", "Female", "Other"], disabled=disabled)
+        email        = st.text_input("Email ID",    d["email"],    placeholder="your@gmail.com", disabled=disabled)
+        mobile       = st.text_input("Mobile",      d["mobile"],                                  disabled=disabled)
+        github_url   = st.text_input("GitHub URL",  d.get("github_url",""),   placeholder="https://github.com/your-profile",   disabled=disabled)
+        linkedin_url = st.text_input("LinkedIn URL",d.get("linkedin_url",""),placeholder="https://linkedin.com/in/your-profile",disabled=disabled)
+
+        country_options = ["Select Country", "USA", "India", "UK"]
+        try:
+            c_idx = country_options.index(d.get("country", "Select Country"))
+        except ValueError:
+            c_idx = 0
+        country = st.selectbox("Country", country_options, index=c_idx, disabled=disabled)
 
     st.markdown("### Learning Profile")
     st.caption("Customize your learning goals and interests to receive personalized guidance.")
     col3, col4 = st.columns(2)
     with col3:
-        goal = st.text_input("Learning Goal", data["goal"], disabled=disabled)
-        level = st.selectbox("Skill Level", ["Beginner", "Intermediate", "Advanced"], 
-                             index=["Beginner","Intermediate","Advanced"].index(data["level"]), disabled=disabled)
+        goal = st.text_input("Learning Goal", d["goal"], disabled=disabled)
+        level_options = ["Select your skill level", "Beginner", "Intermediate", "Advanced"]
+        try:
+            l_idx = level_options.index(d.get("level", "Select your skill level"))
+        except ValueError:
+            l_idx = 0
+        level = st.selectbox("Skill Level", options=level_options, index=l_idx, disabled=disabled)
+
     with col4:
-        interest = st.multiselect("Interested Domains", ["UI/UX", "AI", "Web Dev", "Data Science"], 
-                                  default=data["interest"], disabled=disabled)
+        interest = st.multiselect(
+            "Interested Domains",
+            ["UI/UX Design","Artificial Intelligence (AI)","Web Development","Data Science",
+             "Cybersecurity","Cloud Computing","Mobile App Development","Machine Learning (ML)",
+             "DevOps","Game Development","Blockchain","Internet of Things (IoT)",
+             "Digital Marketing","Product Management","Data Analytics","Other"],
+            default=d["interest"],
+            disabled=disabled
+        )
 
     st.markdown('<div class="separator"></div>', unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([13,1,1])
-    with col2:
-        if not st.session_state.edit_mode:
-            if st.button("Edit"):
+    col_space, col_reset, col_cancel, col_save = st.columns([12, 1.3, 1.3, 1.3])
+
+    if not st.session_state.edit_mode:
+        with col_save:
+            if st.button("Edit", use_container_width=True):
                 st.session_state.edit_mode = True
+                # ✅ Save original data for reset
+                st.session_state.default_profile_data = data.copy()
+                st.session_state.edit_temp = data.copy()
                 st.rerun()
-    with col3:
-        if st.session_state.edit_mode:
-            if st.button("Save"):
-                add_activity("👤", "Profile Updated", "User updated profile details")
-                st.session_state.profile_data.update({
+    else:
+        with col_reset:
+            if st.button("Reset", use_container_width=True):
+                # ✅ Restore original data — true reset
+                st.session_state.edit_temp = st.session_state.default_profile_data.copy()
+                st.rerun()
+
+        with col_cancel:
+            if st.button("Cancel", use_container_width=True):
+                # ✅ Discard all changes — nothing saved
+                del st.session_state.edit_temp
+                st.session_state.edit_mode = False
+                st.rerun()
+
+        with col_save:
+            if st.button("Save", type="primary", use_container_width=True):
+                # ✅ Save temp → real profile_data
+                updated = {
                     "name": name, "email": email, "qualification": qualification,
                     "mobile": mobile, "dob": dob, "country": country,
                     "username": username, "gender": gender, "goal": goal,
                     "level": level, "interest": interest,
-                })
+                    "github_url": github_url, "linkedin_url": linkedin_url,
+                }
+                st.session_state.profile_data.update(updated)
+                del st.session_state.edit_temp
                 st.session_state.edit_mode = False
-                st.success("Saved")
+                add_activity("👤", "Profile Updated", "User updated profile details")
+                st.success("Profile saved!")
                 st.rerun()
     
 # SETTINGS
@@ -1548,22 +417,203 @@ def render_settings():
     )
     with tab1:
         st.caption("Adjust how the platform looks and feels for your comfort.")
-        st.subheader("Theme")
-        st.radio("Select Theme", ["Light", "Dark", "System"])
 
+        # -------- THEME --------
+        st.subheader("Theme")
+
+        themes = ["Dark", "Light", "Midnight Blue"]
+
+        if "app_theme" not in st.session_state:
+            st.session_state.app_theme = "Dark"
+
+        current_theme = (
+            st.session_state.app_theme
+            if st.session_state.app_theme in themes else "Dark"
+        )
+
+        theme = st.radio(
+            "Select Theme",
+            themes,
+            index=themes.index(current_theme),
+            horizontal=True
+        )
+
+        if theme != st.session_state.app_theme:
+            st.session_state.app_theme = theme
+            st.rerun()
+
+        st.divider()
+
+        # -------- FONT --------
         st.subheader("Font")
-        st.selectbox("Font Family", ["Arial", "Roboto", "Poppins"])
-        st.slider("Font Size", 10, 24, 14)
-        
-    with tab2:
-        st.caption("Choose what updates and alerts you want to receive.")
-        st.toggle("Email Notifications")
-        st.toggle("Course Updates")
-        st.toggle("AI Recommendations")
+
+        fonts = ["Inter", "Roboto", "Poppins", "Arial", "Georgia"]
+
+        if "app_font" not in st.session_state:
+            st.session_state.app_font = "Inter"
+
+        if "app_font_size" not in st.session_state:
+            st.session_state.app_font_size = 15
+
+        current_font = (
+            st.session_state.app_font
+            if st.session_state.app_font in fonts else "Inter"
+        )
+
+        font = st.selectbox(
+            "Font Family",
+            fonts,
+            index=fonts.index(current_font)
+        )
+
+        font_size = st.slider(
+            "Font Size",
+            12, 22,
+            st.session_state.app_font_size
+        )
+
+        # Apply instantly (no button needed)
+        st.session_state.app_font = font
+        st.session_state.app_font_size = font_size
+
+        st.divider()
+
+        # -------- CHAT DISPLAY --------
+        st.subheader("Chat Display")
+
+        if "show_timestamps" not in st.session_state:
+            st.session_state.show_timestamps = True
+
+        if "compact_mode" not in st.session_state:
+            st.session_state.compact_mode = False
+
+        st.toggle("Show message timestamps", key="show_timestamps")
+        st.toggle("Compact chat mode", key="compact_mode")
+            
+        with tab2:
+            st.caption("Choose what updates and alerts you want to receive via email.")
+
+            # -------- SAFE SESSION INITIALIZATION --------
+            if "profile_data" not in st.session_state:
+                st.session_state.profile_data = {"email": "", "name": "User"}
+
+            defaults = {
+                "notif_email": True,
+                "notif_course": True,
+                "notif_ai": False,
+                "notif_security": True,
+                "notif_weekly": False,
+            }
+
+            for key, val in defaults.items():
+                if key not in st.session_state:
+                    st.session_state[key] = val
+
+            # -------- EMAIL INFO --------
+            st.subheader("Email Notifications")
+
+            user_email = st.session_state.profile_data.get("email", "")
+            disabled = not bool(user_email)
+
+            if user_email:
+                st.info(f"Notifications will be sent to: **{user_email}**")
+            else:
+                st.warning("No email found. Update your profile first.")
+
+            # -------- TOGGLES --------
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.toggle("General Email Notifications", key="notif_email", disabled=disabled)
+                st.toggle("Course Updates", key="notif_course", disabled=disabled)
+                st.toggle("Security Alerts", key="notif_security", disabled=disabled)
+
+            with col2:
+                st.toggle("AI Recommendations", key="notif_ai", disabled=disabled)
+                st.toggle("Weekly Progress Summary", key="notif_weekly", disabled=disabled)
+
+            st.divider()
+
+            # -------- TEST EMAIL --------
+            st.subheader("Test Notification")
+
+            if st.button("Send Test Email", type="primary"):
+                if not user_email:
+                    st.error("Please add your email in Profile first.")
+                elif not st.session_state.notif_email:
+                    st.warning("Enable Email Notifications first.")
+                else:
+                    try:
+                        import smtplib
+                        from email.mime.text import MIMEText
+                        from email.mime.multipart import MIMEMultipart
+
+                        # ⚠️ Replace these with your real credentials
+                        EMAIL_HOST = "smtp.gmail.com"
+                        EMAIL_PORT = 587
+                        EMAIL_USERNAME = "your_email@gmail.com"
+                        EMAIL_PASSWORD = "your_app_password"
+                        EMAIL_FROM = EMAIL_USERNAME
+
+                        msg = MIMEMultipart("alternative")
+                        msg["Subject"] = "NexaAI — Test Notification"
+                        msg["From"] = EMAIL_FROM
+                        msg["To"] = user_email
+
+                        html = f"""
+                        <html>
+                        <body style="font-family:Arial;background:#0a0a0a;color:#f3f4f6;padding:30px;">
+                            <div style="max-width:480px;margin:auto;background:#111;border:1px solid #222;border-radius:16px;padding:30px;">
+                                <h2 style="color:#3b82f6;">NexaAI</h2>
+                                <p>Hi <b>{st.session_state.profile_data.get("name","User")}</b>, your notifications are working!</p>
+                                <p style="color:#666;font-size:12px;">© 2026 NexaAI Team</p>
+                            </div>
+                        </body>
+                        </html>
+                        """
+
+                        msg.attach(MIMEText(html, "html"))
+
+                        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as server:
+                            server.ehlo()
+                            server.starttls()
+                            server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+                            server.sendmail(EMAIL_FROM, user_email, msg.as_string())
+
+                        st.success(f"Test email sent to **{user_email}**")
+
+                        # -------- ACTIVITY LOG --------
+                        if "activity_logs" in st.session_state:
+                            add_activity("📧", "Test Email Sent", f"Sent to {user_email}")
+
+                    except Exception as e:
+                        st.error(f"Email failed: {str(e)}")
     with tab3:
-        st.subheader("General")
-        st.selectbox("Language", ["English", "Hindi"])
-        st.selectbox("Timezone", ["IST", "UTC"])
+        
+        st.caption("Configure your general app preferences.")
+ 
+        # ---- TIMEZONE — dynamic from profile ----
+        st.subheader("Timezone")
+        country = st.session_state.profile_data.get("country", "India")
+        country_tz = {"India": "IST (UTC+5:30)", "USA": "EST (UTC-5)", "UK": "GMT (UTC+0)"}
+        detected_tz = country_tz.get(country, "IST (UTC+5:30)")
+        st.info(f"Detected from profile country **{country}**: **{detected_tz}**")
+ 
+        if "app_timezone" not in st.session_state:
+            st.session_state.app_timezone = detected_tz
+        tz = st.selectbox("Select Timezone", ["IST (UTC+5:30)", "EST (UTC-5)", "PST (UTC-8)", "GMT (UTC+0)", "UTC"])
+        st.session_state.app_timezone = tz
+ 
+        st.divider()
+ 
+        # ---- AI BEHAVIOUR ----
+        st.subheader("AI Behaviour")
+        if "auto_title" not in st.session_state:
+            st.session_state.auto_title = True
+        if "save_history" not in st.session_state:
+            st.session_state.save_history = True
+        st.session_state.auto_title   = st.toggle("Auto-generate chat titles using AI", value=st.session_state.auto_title)
+        st.session_state.save_history = st.toggle("Save chat history across sessions",  value=st.session_state.save_history)
     with tab4:
         st.caption("Need assistance? Find answers or contact support.")
         # --- HELP VIEW ---
@@ -1576,39 +626,69 @@ def render_settings():
         st.subheader("Frequently Asked Questions")
         
         with st.expander("How do I export my data?"):
-            st.markdown("<p style='color: #FFFFFF; font-size: 16px;'>Go to the <b>Privacy</b> tab and click <b>Download My Data</b>.</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: #FFFFFF; font-size: 16px;'>Go to the <b>Privacy</b> tab and click <b>Download My Data</b>. Your profile and security data will be exported.</p>", unsafe_allow_html=True)
 
         with st.expander("How is my AI Readiness score calculated?"):
-            st.markdown("<p style='color: #FFFFFF; font-size: 16px;'>It is based on your completed topics vs. industry-standard skill benchmarks.</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: #FFFFFF; font-size: 16px;'>It is based on your completed topics vs industry-standard skill benchmarks for your selected skill level.</p>", unsafe_allow_html=True)
+
+        with st.expander("What is EchoAI?"):
+            st.markdown("<p style='color: #FFFFFF; font-size: 16px;'>EchoAI is a general-purpose AI. It uses Llama3 (default), Phi3-mini (fast), or Llama3 with more tokens (smart mode).</p>", unsafe_allow_html=True)
+
+        with st.expander("What is AtlasAI?"):
+            st.markdown("<p style='color: #FFFFFF; font-size: 16px;'>AtlasAI is RAG-based — it only answers from your course videos giving exact video number and timestamp.</p>", unsafe_allow_html=True)
+
+        with st.expander("How does OTP password reset work?"):
+            st.markdown("<p style='color: #FFFFFF; font-size: 16px;'>Enter email → receive 6-digit OTP → verify within 1 minute → set new password.</p>", unsafe_allow_html=True)
+
+        with st.expander("Why does AtlasAI say Not found in course content?"):
+            st.markdown("<p style='color: #FFFFFF; font-size: 16px;'>The topic is not in the course videos. Try rephrasing or asking about a specific concept from the course.</p>", unsafe_allow_html=True)
+
+        with st.expander("How do I delete my account?"):
+            st.markdown("<p style='color: #FFFFFF; font-size: 16px;'>Go to <b>Privacy</b> → <b>Danger Zone</b> → <b>Delete Account</b>. This is permanent and cannot be undone.</p>", unsafe_allow_html=True)
+
+        with st.expander("Is my data private?"):
+            st.markdown("<p style='color: #FFFFFF; font-size: 16px;'>Yes. All AI models run locally via Ollama. No data is sent to external services like OpenAI.</p>", unsafe_allow_html=True)
+
+        with st.expander("What does Smart speed mode do in EchoAI?"):
+            st.markdown("<p style='color: #FFFFFF; font-size: 16px;'>Smart mode uses 2000 tokens vs 600 default — giving longer, more detailed responses for complex topics.</p>", unsafe_allow_html=True)
+
+        with st.expander("How do I change my profile information?"):
+            st.markdown("<p style='color: #FFFFFF; font-size: 16px;'>Go to <b>Profile</b> tab → click <b>Edit</b> → update your info → click <b>Save</b>.</p>", unsafe_allow_html=True)
 
         st.divider()
 
         # --- CONTACT FORM ---
-        st.subheader("Report an Issue")
         
         # Using columns to keep the form neat
         contact_col, info_col = st.columns([2, 1])
-        
+
+        st.subheader("Report an Issue")
+        contact_col, info_col = st.columns([2, 1])
+
         with contact_col:
-            issue_type = st.selectbox("Issue Category", ["Bug Report", "Feature Request", "Account Access"], key="help_issue_type")
+            issue_type = st.selectbox(
+                "Issue Category",
+                ["Bug Report", "Feature Request", "Account Access", "AI Response Quality", "Other"],
+                key="help_issue_type"
+            )
             message = st.text_area("Describe your issue", placeholder="Please provide details...", key="help_message")
-            
-            # Making the button professional and right-aligned
-            btn_col1, btn_col2 = st.columns([2, 1])
-            with btn_col2:
+            b1, b2 = st.columns([2, 1])
+            with b2:
                 if st.button("Submit Report", type="primary", use_container_width=True):
                     if message:
-                        st.success("Report submitted to the engineering team.")
-                        st.toast("Ticket #4920 created.")
+                        st.success("Report submitted!")
+                        st.toast("Ticket created!")
+                        add_activity("🐛", "Issue Reported", f"{issue_type}: {message[:40]}")
                     else:
                         st.error("Please describe the issue first.")
 
         with info_col:
             st.info("**Technical Support**")
-            st.caption("Average response time: < 24 hours")
+            st.caption("Response time: < 24 hours")
             st.write("---")
-            st.write("📍 **Location**")
-            st.caption("Bhusawal / Pune, India")
+            st.write("**Location**")
+            user_country = st.session_state.profile_data.get("country", "India")
+            st.caption(user_country)
     
 
 # --- SECURITY VIEW ---
@@ -1731,79 +811,129 @@ def render_security():
     # --- SECTION 3: ACTIVE SESSIONS ---
     st.subheader("Active Sessions")
     
-    # Session 1: Current
-    with st.container():
-        sc1, sc2 = st.columns([3, 1])
-        with sc1:
-            st.markdown("**Windows PC — Bhusawal, India**")
-            st.markdown("<p style='color: #4CAF50; font-size: 14px; margin-top: -10px;'>Active now • Chrome Browser</p>", unsafe_allow_html=True)
-        with sc2:
-            st.button("Current", disabled=True, use_container_width=True)
+    #  Dynamic — store sessions in session_state
+    if "active_sessions" not in st.session_state:
+        import platform
+        import socket
+        
+        # Get system details
+        os_name = platform.system()
+        hostname = socket.gethostname()
+        
+        # Detect Browser from Headers
+        user_agent = st.context.headers.get("User-Agent", "")
+        
+        if "Firefox" in user_agent:
+            browser_name = "Firefox Browser"
+        elif "Edg" in user_agent:
+            browser_name = "Edge Browser"
+        elif "Chrome" in user_agent:
+            browser_name = "Chrome Browser"
+        elif "Safari" in user_agent:
+            browser_name = "Safari Browser"
+        else:
+            browser_name = "Web Browser"
 
-    # Session 2: Other
-    with st.container():
-        st.caption("Other devices where your account is logged in. Revoke access if you don't recognize them.")
-        so1, so2 = st.columns([3, 1])
-        with so1:
-            st.markdown("**Samsung Galaxy — Pune, India**")
-            st.markdown("<p style='color: #FFFFFF; font-size: 14px; opacity: 0.7; margin-top: -10px;'>Last active: 45m ago</p>", unsafe_allow_html=True)
-        with so2:
-            if st.button("Revoke", key="rev_mob", use_container_width=True):
-                st.toast("Mobile session terminated.")
+        st.session_state.active_sessions = [
+            {
+                "id": "current",
+                "device": f"{os_name} — {hostname}",
+                "location": st.session_state.profile_data.get("country", "India"),
+                "status": "Active now",
+                "browser": browser_name,
+                "current": True
+            }
+        ]
+    for session in st.session_state.active_sessions:
+        with st.container():
+            sc1, sc2 = st.columns([3, 1])
+            with sc1:
+                st.markdown(f"**{session['device']} — {session['location']}**")
+                color = "#4CAF50" if session["current"] else "#FFFFFF"
+                opacity = "1" if session["current"] else "0.7"
+                st.markdown(
+                    f"<p style='color:{color}; font-size:14px; margin-top:-10px; opacity:{opacity};'>"
+                    f"{session['status']} • {session['browser']}</p>",
+                    unsafe_allow_html=True
+                )
+            with sc2:
+                if session["current"]:
+                    st.button("Current", disabled=True, key=f"sess_{session['id']}", use_container_width=True)
+                else:
+                    if st.button("Revoke", key=f"rev_{session['id']}", use_container_width=True):
+                        st.session_state.active_sessions = [
+                            s for s in st.session_state.active_sessions
+                            if s["id"] != session["id"]
+                        ]
+                        add_activity("🔒", "Session Revoked", f"Revoked session: {session['device']}")
+                        st.toast(f"Session revoked: {session['device']}")
+                        st.rerun()
 
     st.divider()
     st.caption("🛡️ Security Tip: If you see a device you don't recognize, revoke it and change your password immediately.")
 
 # CONNECTIONS
+# CONNECTIONS
 def render_connections(): 
     st.title("Connected Accounts") 
-    st.caption("Manage your linked social and professional accounts. Link your external accounts for faster access and better integration.") 
+    st.caption("Manage your linked social and professional accounts for better integration.") 
     st.divider()
-    def account_row(name, icon="🔗"):
-        data = st.session_state.connections[name]
-        is_connected = data["connected"]
-        email = data["email"]
+
+    profile = st.session_state.profile_data
+
+    def account_row(name, icon, url_key, placeholder_url, open_url):
+        conn_data    = st.session_state.connections[name]
+        is_connected = conn_data["connected"]
+        # ✅ Uses real URL from profile_data
+        linked_url   = profile.get(url_key, "")
 
         col1, col2, col3 = st.columns([0.5, 3, 1.5])
-        
         with col1:
             st.markdown(f"### {icon}")
-            
         with col2:
             st.markdown(f"**{name}**")
-            if is_connected:
-                st.caption(f"Linked as: {email}")
+            if is_connected and linked_url:
+                st.caption(f"Linked: {linked_url}")
+                st.markdown(
+                    f"<a href='{linked_url}' target='_blank' style='color:#3b82f6; font-size:12px;'>Open {name} ↗</a>",
+                    unsafe_allow_html=True
+                )
+            elif is_connected and not linked_url:
+                st.caption("Connected (no URL saved in profile)")
             else:
                 st.caption("Not connected")
-                
+                if not linked_url:
+                    st.markdown(
+                        f"<span style='color:#f59e0b; font-size:12px;'>⚠️ Add {name} URL in Profile tab first</span>",
+                        unsafe_allow_html=True
+                    )
+
         with col3:
             if is_connected:
                 if st.button("Disconnect", key=f"btn_dis_{name}", use_container_width=True):
-                    # ✅ Update state
                     st.session_state.connections[name]["connected"] = False
-                    st.session_state.connections[name]["email"] = None
-                    
-                    # ✅ Log activity
+                    st.session_state.connections[name]["email"]     = None
                     add_activity("❌", f"{name} Disconnected", f"{name} account removed")
-                    
+                    st.success(f"{name} disconnected.")
                     st.rerun()
             else:
-                if st.button("Connect", key=f"btn_con_{name}", type="primary", use_container_width=True):
-                    # ✅ Simulate linking (later replace with OAuth)
-                    st.session_state.connections[name]["connected"] = True
-                    st.session_state.connections[name]["email"] = f"{name.lower()}@user.com"
-                    
-                    # ✅ Log activity
-                    add_activity("🔗", f"{name} Connected", f"{name} account linked")
-                    
-                    st.rerun()
+                if not linked_url:
+                    st.button("Connect", key=f"btn_con_{name}", use_container_width=True, disabled=True)
+                    st.caption("Add URL in Profile first")
+                else:
+                    if st.button("Connect", key=f"btn_con_{name}", type="primary", use_container_width=True):
+                        st.session_state.connections[name]["connected"] = True
+                        st.session_state.connections[name]["email"]     = linked_url
+                        add_activity("🔗", f"{name} Connected", f"{name} linked: {linked_url}")
+                        st.success(f"{name} connected!")
+                        st.rerun()
+        st.divider()
 
+    account_row("Google",   "🌐", "email",       "your@gmail.com",                  "https://myaccount.google.com")
+    account_row("GitHub",   "💻", "github_url",  "https://github.com/username",     "https://github.com")
+    account_row("LinkedIn", "👔", "linkedin_url","https://linkedin.com/in/username","https://linkedin.com")
 
-    # --- RENDER THE ACCOUNTS ---
-    # In a real app, these values would come from your FastAPI backend
-    account_row("Google", icon="🌐")
-    account_row("GitHub", icon="💻")
-    account_row("LinkedIn", icon="👔")
+    st.info("💡 Tip: Add your GitHub and LinkedIn URLs in the **Profile** tab to enable connection.")
 
 # PRIVACY
 # --- PRIVACY VIEW ---
@@ -1812,23 +942,50 @@ def render_privacy():
     st.caption("Control how your data is used and manage your privacy settings.")
     st.divider()
 
+    # ---- INIT PRIVACY STATE ----
+    if "privacy_public"       not in st.session_state: st.session_state.privacy_public       = True
+    if "privacy_seo"          not in st.session_state: st.session_state.privacy_seo           = False
+    if "privacy_ai_personal"  not in st.session_state: st.session_state.privacy_ai_personal  = True
+
     # --- SECTION 1: VISIBILITY ---
     st.subheader("Profile Visibility")
+
     with st.container():
-        v_col1, v_col2 = st.columns([3, 1])
-        with v_col1:
+        v1, v2 = st.columns([3, 1])
+        with v1:
             st.markdown("**Public Profile**")
-            st.caption("Allow others to see your projects, skills, and batches.")
-        with v_col2:
-            st.toggle("Public", value=True, key="visibility_toggle", label_visibility="collapsed")
-    
+            st.caption("Allow others to see your projects, skills, and learning progress.")
+        with v2:
+            new_public = st.toggle(
+                "Public",
+                value=st.session_state.privacy_public,
+                key="visibility_toggle",
+                label_visibility="collapsed"
+            )
+        if new_public != st.session_state.privacy_public:
+            st.session_state.privacy_public = new_public
+            status = "Public" if new_public else "Private"
+            # ✅ Would call backend: PATCH /user/privacy {"public": new_public}
+            add_activity("🛡️", "Profile Visibility Changed", f"Profile set to {status}")
+            st.toast(f"Profile set to **{status}**")
+            st.rerun()
+
+    # Show current status
+    if st.session_state.privacy_public:
+        st.success("Your profile is **Public** — visible to others.")
+    else:
+        st.warning("Your profile is **Private** — only you can see it.")
+
     with st.container():
-        s_col1, s_col2 = st.columns([3, 1])
-        with s_col1:
+        s1, s2 = st.columns([3, 1])
+        with s1:
             st.markdown("**Search Engine Indexing**")
-            st.caption("Allow Google to link to your profile and projects.")
-        with s_col2:
-            st.toggle("SEO", value=False, key="seo_toggle", label_visibility="collapsed")
+            st.caption("Allow Google to index your profile.")
+        with s2:
+            new_seo = st.toggle("SEO", value=st.session_state.privacy_seo, key="seo_toggle", label_visibility="collapsed")
+        if new_seo != st.session_state.privacy_seo:
+            st.session_state.privacy_seo = new_seo
+            add_activity("🔍", "SEO Setting Changed", f"Search indexing: {'on' if new_seo else 'off'}")
 
     st.divider()
 
@@ -1838,79 +995,82 @@ def render_privacy():
         a1, a2 = st.columns([3, 1])
         with a1:
             st.markdown("**AI Personalization**")
-            st.caption("Allow the system to use your activity to improve learning recommendations.")
+            st.caption("Allow the system to use your activity to improve AI recommendations.")
         with a2:
-            st.toggle("Enabled", value=True, key="ai_toggle", label_visibility="collapsed")
+            new_ai = st.toggle("Enabled", value=st.session_state.privacy_ai_personal, key="ai_toggle", label_visibility="collapsed")
+        if new_ai != st.session_state.privacy_ai_personal:
+            st.session_state.privacy_ai_personal = new_ai
 
     st.divider()
 
-    # --- SECTION 3: YOUR PERSONAL DATA (FIXED BUTTON WIDTH) ---
+    # --- SECTION 3: EXPORT ---
     st.subheader("Your Personal Data")
     with st.container():
-        d_col1, d_col2 = st.columns([3, 1]) # Same 3:1 ratio as toggles
-        with d_col1:
+        d1, d2 = st.columns([3, 1])
+        with d1:
             st.markdown("**Export Account Data**")
             st.caption("Download a copy of your account data anytime.")
-        
-        with d_col2:
+        with d2:
             try:
+                # ✅ Dynamic — real profile data
+                profile = st.session_state.profile_data
                 export_payload = {
                     "user_info": {
-                        "name": "Harshada Chaudhari",
-                        "degree": "B.Tech in Artificial Intelligence and Data Science",
-                        "batch": "2026",
-                        "college": "SSGBCOET, Bhusawal"
+                        "name":          profile.get("name", "User"),
+                        "email":         profile.get("email", ""),
+                        "qualification": profile.get("qualification", ""),
+                        "country":       profile.get("country", "India"),
+                        "username":      profile.get("username", ""),
+                        "gender":        profile.get("gender", ""),
+                        "goal":          profile.get("goal", ""),
+                        "level":         profile.get("level", "Beginner"),
+                        "interests":     ", ".join(profile.get("interest", [])),
                     },
                     "security_settings": {
                         "two_factor_enabled": st.session_state.get("two_fa_enabled", False),
-                        "profile_visibility": "Public" if st.session_state.get("visibility_toggle") else "Private"
+                        "profile_visibility": "Public" if st.session_state.privacy_public else "Private"
                     },
-                    "projects": ["ChatStream AI", "Movie Rec System", "Google Play EDA"]
+                    "projects": ["NexaAI — AI Teaching Assistant"]
                 }
-                json_data = json.dumps(export_payload, indent=4)
-
-                # Button now stays inside the small column
                 pdf_file = generate_pdf(export_payload)
-
-                download_clicked = st.download_button(
-                    label="📥 Download PDF",
+                clicked = st.download_button(
+                    label="Download PDF",
                     data=pdf_file,
-                    file_name="user_data.pdf",
+                    file_name=f"{profile.get('name','user')}_data.pdf",
                     mime="application/pdf",
                     use_container_width=True
                 )
-
-                # ✅ Log only when user clicks
-                if download_clicked:
-                    add_activity("📄", "Data Exported", "User downloaded PDF report")
+                if clicked:
+                    add_activity("📄", "Data Exported", "User downloaded profile PDF")
             except Exception as e:
-                st.error("Export Error")
+                st.error(f"Export Error: {str(e)}")
 
     st.divider()
 
-    # --- SECTION 4: DANGER ZONE (FIXED BUTTON WIDTH) ---
+    # --- SECTION 4: DANGER ZONE ---
     st.subheader("Danger Zone")
     with st.container():
-        del_col1, del_col2 = st.columns([3, 1])
-        with del_col1:
+        del1, del2 = st.columns([3, 1])
+        with del1:
             st.markdown("**Delete Account**")
             st.caption("Permanently remove your account and all associated data. This cannot be undone.")
-        with del_col2:
-            # Button stays small on the right
+        with del2:
             if st.button("Delete", type="primary", use_container_width=True):
                 st.session_state.show_delete_warning = True
 
-    # Confirmation Logic (Only shows if button is clicked)
     if st.session_state.get("show_delete_warning"):
-        st.warning("⚠️ Are you sure? This will erase your B.Tech project data.")
-        # Sub-columns to keep confirmation buttons small too
-        c_col1, c_col2, c_spacer = st.columns([1, 1, 2])
-        with c_col1:
-            if st.button("Confirm", type="primary", key="final_del", use_container_width=True):
+        st.warning("⚠️ Are you sure? This will permanently erase all your data.")
+        c1, c2, _ = st.columns([1, 1, 2])
+        with c1:
+            if st.button("Confirm Delete", type="primary", key="final_del", use_container_width=True):
                 add_activity("🗑️", "Account Deleted", "User permanently deleted account")
+                # ✅ Would call: DELETE /user/{id} on backend
                 st.success("Account deleted.")
+                import time; time.sleep(1)
+                st.session_state.clear()
+                st.session_state.page = "login"
                 st.rerun()
-        with c_col2:
+        with c2:
             if st.button("Cancel", key="cancel_del", use_container_width=True):
                 st.session_state.show_delete_warning = False
                 st.rerun()
@@ -2129,7 +1289,7 @@ def render_ai():
     st.divider()
 
     # --- CARDS ---
-    st.subheader("🚀 Smart Recommendations")
+    st.subheader("Smart Recommendations")
 
     def ai_card(title, text, type="info"):
         if type == "info": st.info(f"**{title}**")
@@ -2215,229 +1375,44 @@ def render_activity():
             st.toast("Logs cleared")
             st.rerun()
 
+from datetime import datetime
+import pytz
+
 def add_activity(icon, event, detail):
     if "activity_logs" not in st.session_state:
         st.session_state.activity_logs = []
+
+    tz = st.session_state.get("app_timezone", "IST (UTC+5:30)")
+
+    tz_map = {
+        "IST (UTC+5:30)": "Asia/Kolkata",
+        "EST (UTC-5)": "US/Eastern",
+        "PST (UTC-8)": "US/Pacific",
+        "GMT (UTC+0)": "UTC",
+        "UTC": "UTC"
+    }
+
+    zone = pytz.timezone(tz_map.get(tz, "Asia/Kolkata"))
+    current_time = datetime.now(zone).strftime("%d %b, %I:%M %p")
 
     st.session_state.activity_logs.append({
         "icon": icon,
         "event": event,
         "detail": detail,
-        "time": datetime.now().strftime("%d %b, %I:%M %p")
+        "time": current_time
     })
 # --- BILLING / EXPLORE PLANS VIEW ---
 def render_billing():
-    # 1. Inject Custom CSS for the 'Card' Look
-    st.markdown("""
-        <style>
-        .plan-card {
-            background-color: #0E1117;
-            border: 1px solid #30363D;
-            border-radius: 15px;
-            padding: 30px;
-            height: 550px;
-            transition: transform 0.3s;
-        }
-        .plan-card:hover {
-            border: 2px solid #3b82f6 !important;
-            transform: translateY(-5px);
-            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
-        }
-        .price-text {
-            font-size: 36px;
-            font-weight: bold;
-            margin-bottom: 0px;
-        }
-        .feature-list {
-            font-size: 14px;
-            color: #8B949E;
-            margin-top: 20px;
-            line-height: 1.8;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    from billing import render_billing as _billing
+    _billing()
 
-    st.markdown("<h1 style='text-align: center; font-size: 50px;'>Explore plans</h1>", unsafe_allow_html=True)
-    # Plan toggle (Visual only)
-    st.markdown("<p style='text-align: center; color: #8B949E;'>Choose the plan that best fits your learning journey and unlock powerful AI features to accelerate your growth.</p>", unsafe_allow_html=True)
-    st.write("##")
+def render_plus_payment():
+    from billing import render_plus_payment as _plus
+    _plus()
 
-    # 2. Creating the 3-Column Grid
-    col1, col2, col3 = st.columns(3)
-
-    # --- FREE PLAN ---
-    with col1:
-        st.markdown(f"""
-            <div class="plan-card">
-                <h3>🌱</h3>
-                <h2>Free</h2>
-                <p style="color: #8B949E;">Basic access for students</p>
-                <p class="price-text">₹0</p>
-                <p style="color: #8B949E; font-size: 12px;">Free for everyone</p>
-                <br>
-                <div class="feature-list">
-                    ✓ Course-based AI Assistance<br>
-                    ✓ Basic AI Insights<br>
-                    ✓ Community Support<br>
-                    ✓ Limited Queries per Day 
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("Current Plan", key="free_btn", use_container_width=True, disabled=True):
-            pass
-
-    # --- PRO PLAN ---
-    with col2:
-        st.markdown(f"""
-            <div class="plan-card">
-                <h3>🌿</h3>
-                <h2>Pro</h2>
-                <p style="color: #8B949E;">For career growth</p>
-                <p class="price-text">₹499</p>
-                <p style="color: #8B949E; font-size: 12px;">Per month billed annually</p>
-                <br>
-                <div class="feature-list">
-                    ✓ Everything in Free, plus:<br>
-                    ✓ Access to Neuxa AI (Limited Usage)<br>
-                    ✓ Advanced Learning Insights<br>
-                    ✓ Priority AI Support<br>
-                    ✓ Increased Query Limits  
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("Upgrade to Pro", key="pro_btn", type="primary", use_container_width=True):
-            st.toast("Connecting to Secure Payment...")
-            st.session_state.view = "Pro_Details"
-            st.rerun()
-            add_activity("💳", "Plan Upgrade", "User upgraded to Pro plan")
-    
-
-    # --- MAX PLAN ---
-    with col3:
-        st.markdown(f"""
-            <div class="plan-card">
-                <h3>🌳</h3>
-                <h2>Max</h2>
-                <p style="color: #8B949E;">For power users</p>
-                <p class="price-text">₹999</p>
-                <p style="color: #8B949E; font-size: 12px;">Per month billed monthly</p>
-                <br>
-                <div class="feature-list">
-                    ✓ Everything in Pro, plus:<br>
-                    ✓ Full Access to All AI Systems<br>
-                    ✓ Early Access Features<br>
-                    ✓ Early Access to New AI Features<br>
-                    ✓ Unlimited Neuxa AI Usage  
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("Try Max", key="max_btn", use_container_width=True):
-            st.toast("Checking Max availability...")
-            st.session_state.view = "Max_Details"
-            st.rerun()
-            add_activity("💳", "Plan Upgrade", "User upgraded to max plan")
-
-    st.write("##")
-    st.divider()
-    st.caption("Looking for enterprise solutions? Contact support.")
 def render_pro_payment():
-    st.title("💳 Pro Plan Checkout")
-    st.caption("Secure payment interface")
-
-    st.divider()
-
-    # Plan Summary
-    st.subheader("Plan Summary")
-    st.info("Pro Plan – ₹499/month")
-
-    # User Info
-    st.subheader("Billing Details")
-    # ✅ Prefill from session state
-    name = st.text_input("Full Name", value=st.session_state.profile_data.get("name", ""))
-    email = st.text_input("Email", value=st.session_state.profile_data.get("email", ""))
-
-    # Payment Method
-    st.subheader("Payment Method")
-    method = st.radio("Choose method", ["UPI", "Card", "Net Banking"])
-
-    if method == "UPI":
-        st.text_input("Enter UPI ID", placeholder="example@upi")
-
-    elif method == "Card":
-        st.text_input("Card Number")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.text_input("Expiry")
-        with col2:
-            st.text_input("CVV")
-
-    elif method == "Net Banking":
-        st.selectbox("Select Bank", ["SBI", "HDFC", "ICICI", "Axis"])
-
-    st.divider()
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        if st.button("⬅ Back", use_container_width=True):
-            st.session_state.view = "Billing"
-            st.rerun()
-
-    with col2:
-        if st.button("💳 Pay ₹499", type="primary", use_container_width=True):
-            add_activity("💳", "Payment Success", "User upgraded to Pro")
-            st.success("Payment Successful! Pro Plan Activated 🎉")
-
-            st.session_state.plan = "Pro"
-            st.rerun()
-            
-def render_max_payment():
-    st.title("🚀 Max Plan Checkout")
-    st.caption("Secure payment interface")
-
-    st.divider()
-
-    st.subheader("Plan Summary")
-    st.success("Max Plan – ₹999/month")
-
-    st.subheader("Billing Details")
-    # ✅ Prefill from session state
-    name = st.text_input("Full Name", value=st.session_state.profile_data.get("name", ""))
-    email = st.text_input("Email", value=st.session_state.profile_data.get("email", ""))
-
-    st.subheader("Payment Method")
-    method = st.radio("Choose method", ["UPI", "Card", "Net Banking"])
-
-    if method == "UPI":
-        st.text_input("Enter UPI ID")
-
-    elif method == "Card":
-        st.text_input("Card Number")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.text_input("Expiry")
-        with col2:
-            st.text_input("CVV")
-
-    elif method == "Net Banking":
-        st.selectbox("Select Bank", ["SBI", "HDFC", "ICICI", "Axis"])
-
-    st.divider()
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        if st.button("⬅ Back", use_container_width=True):
-            st.session_state.view = "Billing"
-            st.rerun()
-
-    with col2:
-        if st.button("🚀 Pay ₹999", type="primary", use_container_width=True):
-            add_activity("💳", "Payment Success", "User upgraded to Max")
-            st.success("Payment Successful! Max Plan Activated 🎉")
-
-            st.session_state.plan = "Max"
-            st.rerun()
+    from billing import render_pro_payment as _pro
+    _pro()
 # --- ABOUT VIEW ---
 def render_about():
     # 1. Custom CSS for a centered 'Hero' look
@@ -2485,7 +1460,7 @@ def render_about():
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("🎯 Project Mission")
+        st.subheader("Project Mission")
         st.markdown(f"""
             <p style='color: #FFFFFF; font-size: 16px; opacity: 0.9;'>
                 To bridge the gap between academic theory and industry readiness. 
@@ -2495,7 +1470,7 @@ def render_about():
         """, unsafe_allow_html=True)
 
     with col2:
-        st.subheader("🛡️ Security & Privacy")
+        st.subheader("Security & Privacy")
         st.markdown(f"""
             <p style='color: #FFFFFF; font-size: 16px; opacity: 0.9;'>
                 Built with industry-standard security protocols, featuring 2FA, 
@@ -2536,7 +1511,7 @@ def render_app():
     # Top UI (always visible)
     inject_profile_styles()
     init_profile_state()
-    render_topbar()   # your popover
+   # your popover
     render_sidebar()  # your sidebar
 
     # Page routing
@@ -2551,17 +1526,28 @@ def render_app():
         "Activity": render_activity,
         "Billing": render_billing,
         "About": render_about,
-        "Pro_Details": render_pro_payment,
-        "Max_Details": render_max_payment,
+        "Plus_Payment": render_plus_payment,
+        "Pro_Payment": render_pro_payment,
     }
 
     ROUTES.get(st.session_state.view, render_profile)()
 def main():
-    st.set_page_config(
-        layout="wide",
-        page_title="Streamlit SaaS UI",
-        initial_sidebar_state="expanded"
-    )
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    logo_path = os.path.join(base_dir, "assets", "logo.png")
+
+    try:
+        # 2. Load the image file
+        logo_img = Image.open(logo_path)
+        
+        # 3. Apply the logo to the page configuration
+        st.set_page_config(
+            page_title="Nexa AI- User Profile", 
+            page_icon=logo_img,  # ✅ This adds the logo to your browser tab
+            layout="wide"
+        )
+    except Exception:
+        # Fallback if image path is incorrect
+        st.set_page_config(page_title="Nexa AI- User Profile", layout="wide")
 
     render_app()    
 if __name__ == "__main__":    

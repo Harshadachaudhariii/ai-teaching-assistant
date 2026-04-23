@@ -3,6 +3,8 @@
 import streamlit as st
 import requests
 from email_reset_pass import render_forgot_password_flow
+from PIL import Image
+import os
 
 # --- 1. CONFIGURATION & STATE ---
 def init_auth_state():
@@ -149,7 +151,7 @@ def render_auth_system():
             st.caption("Continue your learning journey with AI assistance.")
 
             with st.container(border=True):
-                email = st.text_input("Email Address", placeholder="name@company.com")
+                email = st.text_input("Email Address", placeholder="name@gmail.com")
                 password = st.text_input("Password", type="password", placeholder="••••••••")
 
                 btn_col1, btn_col2 = st.columns([1, 1])
@@ -261,7 +263,26 @@ def render_auth_system():
 
         elif st.session_state.page == "reset":
             render_forgot_password_flow()
+def setup_page():
+    """Handles page configuration and logo loading."""
+    # 1. Define paths (Frontend/modules/ -> Frontend/assets/logo.png)
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    logo_path = os.path.join(base_dir, "assets", "logo.png")
 
+    try:
+        # 2. Load the image file
+        logo_img = Image.open(logo_path)
+        
+        # 3. Apply the logo to the page configuration
+        st.set_page_config(
+            page_title="Nexa AI", 
+            page_icon=logo_img,  
+            layout="wide"
+        )
+    except Exception:
+        # Fallback if image path is incorrect
+        st.set_page_config(page_title="Nexa AI", layout="wide")
 # --- 4. EXECUTION ---
 if __name__ == "__main__":
+    setup_page()
     render_auth_system()

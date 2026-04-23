@@ -1,1 +1,9 @@
-1. my default main ai is atlasai and next ai is echoai
+1. my default main ai is atlasai and next ai is echoai -- done
+2. llm_ui -- done
+3. login -- done 
+
+4. user_profile -- 
+
+5. for payments mode set which ai uses---> reset every 4 hours
+
+6 - google gmail not connected automatically

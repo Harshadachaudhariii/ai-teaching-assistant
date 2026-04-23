@@ -5,7 +5,6 @@ from datetime import datetime, date
 import sys
 import os
 from PIL import Image
-
 # -------------------- PAGE CONFIG --------------------
 current_dir = os.path.dirname(os.path.abspath(__file__))
 logo_path = os.path.join(current_dir, "assets", "logo.png")
@@ -25,6 +24,17 @@ except FileNotFoundError:
         layout="wide",
         initial_sidebar_state="collapsed"
     )
+    
+def inject_icon_library():
+    st.markdown(
+        """
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+        """,
+        unsafe_allow_html=True
+    )
+
+if "ui_init" not in st.session_state:
+    st.session_state.ui_init = True
 
 # -------------------- PATH SETUP --------------------
 sys.path.append(os.path.join(os.path.dirname(__file__), "modules"))
@@ -33,10 +43,25 @@ from modules.landing_page import render_landing_page
 from modules.login import render_auth_system
 from modules.llm_ui import render_nexus_app
 from modules.user_profile import render_app as render_profile
-
+from modules.user_profile import apply_theme, apply_font
+from modules.email_reset_pass import render_forgot_password_flow
 # -------------------- MAIN --------------------
 def main():
+    inject_icon_library()
+    st.markdown("""
+<style>
+/* Fix sidebar icon fallback issue */
+[data-testid="stSidebar"] button {
+    font-family: inherit !important;
+    text-transform: none !important;
+}
 
+/* Force correct font rendering */
+html, body, [class*="css"] {
+    font-size: 16px !important;
+}
+</style>
+""", unsafe_allow_html=True)
     # -------------------- SESSION INIT --------------------
     if "page" not in st.session_state:
         st.session_state.page = "landing"
@@ -64,7 +89,7 @@ def main():
         }
 
     # -------------------- PUBLIC PAGES (NO SIDEBAR) --------------------
-    if st.session_state.page in ["landing", "login", "register", "reset"]:
+    if st.session_state.page in ["landing", "login", "register", "reset","forgot_password"]:
         st.markdown("""
             <style>
                 [data-testid="stSidebar"] { display: none !important; }
@@ -74,8 +99,16 @@ def main():
 
         if st.session_state.page == "landing":
             render_landing_page()
-        else:
+
+        elif st.session_state.page == "login":
             render_auth_system()
+
+        elif st.session_state.page == "register":
+            render_auth_system()
+        elif st.session_state.page == "reset":
+            render_auth_system()
+        elif st.session_state.page == "forgot_password":
+            render_forgot_password_flow()
 
     # -------------------- PRIVATE PAGES (SIDEBAR ALLOWED) --------------------
     elif st.session_state.page == "llm_ui":
@@ -91,6 +124,10 @@ def main():
             st.session_state.page = "login"
             st.rerun()
         render_profile()
+    elif "theme_loaded" not in st.session_state:
+        apply_theme()
+        apply_font()
+        st.session_state.theme_loaded = True
 
 if __name__ == "__main__":
     main()
