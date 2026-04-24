@@ -1,5 +1,3 @@
-# Frontend/landing_page.py
-
 import streamlit as st
 import base64
 import os
@@ -80,9 +78,9 @@ def inject_custom_css():
         }
 
         .hero-title {
-    font-size: 64px !important;      /* Force the size */
-    line-height: 1.1 !important;    /* Fix the overlap - adjust this number as needed */
-    margin-bottom: 10px !important;  /* Create space between lines */
+    font-size: 64px !important;      
+    line-height: 1.1 !important;    
+    margin-bottom: 10px !important;  
     display: block !important;
 }
 
@@ -146,7 +144,7 @@ def inject_custom_css():
             box-shadow: 0px 30px 70px rgba(0,0,0,0.6);
         }
 
-        .pricing-card {
+        /*.pricing-card {
             background: #111111;
             border: 1px solid #222222;
             padding: 40px;
@@ -163,27 +161,71 @@ def inject_custom_css():
             border-color: #3b82f6 !important;
             box-shadow: 0px 0px 30px rgba(59, 130, 246, 0.2);
             transform: translateY(-5px);
-        }
+        }*/
 
-        .ui-preview {
-            background: #161616;
-            border: 1px solid #222;
-            border-radius: 16px;
-            padding: 25px;
-            height: 320px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
+        /* 2. Fix your UI wrapper alignment */
+.ui-preview{
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    background: rgba(20, 20, 20, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid #222;
+    border-radius: 14px;
+    padding: 20px;
+}
 
+/* 3. Fix top tab bar alignment */
+.ui-preview div[style*="display: flex"]{
+    align-items: center;
+}
+
+/* 4. Normalize link spacing & baseline alignment */
+.ui-preview a{
+    line-height: 1.4;
+    display: inline-block;
+}
+
+/* 5. Fix chat bubble width mismatch */
+.ui-preview div[style*="width: 75%"]{
+    width: 70% !important;
+}
+
+/* 6. Fix right-aligned message */
+.ui-preview div[style*="margin-left: 20%"]{
+    margin-left: auto !important;
+    width: 70% !important;
+}
+
+/* 7. Prevent layout jitter */
+.ui-preview div{
+    box-sizing: border-box;
+}
+
+/* 8. Tab underline border fix */
+.ui-preview div[style*="border-bottom"]{
+    border-color: #222 !important;
+}
         .cta-card-bg {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            border: 1px solid #312e81;
-            border-radius: 24px;
-            padding: 60px 40px;
-            text-align: center;
-            margin-bottom: 30px;
-        }
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.25), transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(99, 102, 241, 0.25), transparent 40%),
+        rgba(255, 255, 255, 0.02); /* subtle glass tint */
+
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 24px;
+    padding: 60px 40px;
+    text-align: center;
+    margin-bottom: 30px;
+
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+.cta-card-bg:hover {
+    border: 1px solid rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.2);
+    transition: all 0.3s ease;
+}
 
         .scroll-container {
             overflow: hidden;
@@ -242,7 +284,7 @@ def inject_custom_css():
         }
 
         .card-content .icon {
-            font-size: 2rem;
+            font-size: 7rem;
             margin-bottom: 15px;
         }
 
@@ -255,7 +297,7 @@ def inject_custom_css():
 
         .card-content p {
             color: #888;
-            font-size: 14px;
+            font-size: 16px;
             line-height: 1.6;
         }
         </style>
@@ -274,7 +316,7 @@ def render_navbar():
         st.markdown("""
             <div class="nav-links" style="display:flex; align-items:center; height:100%; padding-top:18px;">
                 <a href="#features_section">Features</a>
-                <a href="#pricing_section">Pricing</a>
+                <a href="#docs_section">Docs</a>
                 <a href="#about_section">About</a>
             </div>
         """, unsafe_allow_html=True)
@@ -292,7 +334,7 @@ def render_navbar():
 # --- 3. HERO SECTION ---
 def render_hero():
     st.write(""); st.write("")
-    left, right = st.columns([1.2, 1])
+    left, right = st.columns([1, 1.3])
 
     with left:
         st.markdown("""
@@ -303,14 +345,14 @@ def render_hero():
             </p>
         """, unsafe_allow_html=True)
 
-        c1, c2 = st.columns([1, 1])
+        c1, c2, c3 = st.columns([1.5, 1,2])
         with c1:
-            if st.button("🚀 Get Started Free", key="hero_cta", use_container_width=True):
-                st.session_state.page = "register"   # ✅ connected to register
+            if st.button("Get Started Free", key="hero_cta", use_container_width=True):
+                st.session_state.page = "register"   #  connected to register
                 st.rerun()
         with c2:
             if st.button("Log In →", key="hero_login", use_container_width=True):
-                st.session_state.page = "login"       # ✅ connected to login
+                st.session_state.page = "login"       #  connected to login
                 st.rerun()
 
     with right:
@@ -359,20 +401,40 @@ def render_hero():
             """, unsafe_allow_html=True)
 
 # --- 4. FEATURES SECTION ---
+# --- 4. FEATURES SECTION ---
 def render_features():
     st.write(""); st.write(""); st.write("")
     st.markdown('<span id="features_section"></span>', unsafe_allow_html=True)
     st.markdown("<h2 style='text-align: center; font-size: 40px;'>Engineered for Students</h2>", unsafe_allow_html=True)
     st.write("")
 
+    # Removed "icon" from the data structure
     features = [
-        {"icon": "💬", "title": "ChatStream AI", "desc": "Ask anything to the General AI. Powered by Ollama for instant local responses."},
-        {"icon": "🎓", "title": "Teaching Assistant", "desc": "Answers strictly from your uploaded course data using advanced RAG systems."},
-        {"icon": "📈", "title": "AI Insights", "desc": "Get personalized recommendations based on your learning patterns and gaps."},
-        {"icon": "🎯", "title": "Learning Progress", "desc": "Visually track your goals and performance across different subjects."},
-        {"icon": "📝", "title": "Smart Notes", "desc": "Automated lecture summaries and key takeaway extractions."},
-        {"icon": "🧪", "title": "Exam Lab", "desc": "Generate practice quizzes and mock interviews based on your specific study history."}
-    ]
+    {
+        "title": "Teaching Assistant",
+        "desc": "Delivers accurate answers grounded in structured course content using a RAG pipeline, ensuring responses stay relevant to your learning material."
+    },
+    {
+        "title": "EchoAI",
+        "desc": "Interact with AI through natural conversations to understand concepts, solve problems, and get clear explanations powered by local LLMs."
+    },
+    {
+        "title": "Preloaded Knowledge System",
+        "desc": "Uses curated and pre-processed course data as its knowledge base, allowing the AI to respond with context-aware and reliable information."
+    },
+    {
+        "title": "Model Switching",
+        "desc": "Choose between models like Phi3 and Llama3 to balance speed, accuracy, and reasoning depth based on your task."
+    },
+    {
+        "title": "Chat History",
+        "desc": "Keeps track of your previous conversations so you can revisit, continue discussions, and maintain learning continuity."
+    },
+    {
+        "title": "Local AI Processing",
+        "desc": "Runs AI models locally via Ollama, providing faster responses while keeping your data private and under your control."
+    }
+]
 
     with st.container():
         rows = [features[i:i+3] for i in range(0, len(features), 3)]
@@ -380,88 +442,99 @@ def render_features():
             cols = st.columns([1, 3, 3, 3, 1])
             for i, feature in enumerate(row):
                 with cols[i+1]:
+                    # Removed the <div class="icon"> line entirely
                     st.markdown(f"""
                         <div class="feature-card">
                             <div class="card-glow"></div>
                             <div class="card-content">
-                                <div class="icon">{feature['icon']}</div>
                                 <h4>{feature['title']}</h4>
                                 <p>{feature['desc']}</p>
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
 
-# --- 5. PRICING SECTION ---
-def render_pricing():
-    st.write(""); st.write(""); st.write("")
-    st.markdown('<span id="pricing_section"></span>', unsafe_allow_html=True)
-    st.markdown("<h2 style='text-align: center; font-size: 40px;'>Simple Pricing</h2>", unsafe_allow_html=True)
-    st.write("")
+# # --- 5. PRICING SECTION ---
+# def render_pricing():
+#     # Finalized Launch Pricing: 149/mo and 1,499/yr
+#     PLANS = {
+#         "Free": {
+#             "price": "₹0",
+#             "period": "Forever free",
+#             "subtitle": "Basic access for students",
+#             "features": [
+#                 "✓ AtlasAI — Course-based RAG (Full Access)",
+#                 "✓ EchoAI — Limited 10 queries/day",
+#                 "✓ Basic AI Insights",
+#                 "✓ Profile & Activity Log",
+#             ],
+#             "btn_text": "Current Plan" if st.session_state.get('user_plan') == 'Free' else "Get Started",
+#             "btn_key": "price_free"
+#         },
+#         "Plus": {
+#             "price": "₹149",
+#             "period": "per month",
+#             "subtitle": "For serious learners",
+#             "features": [
+#                 "✓ Everything in Free, plus:",
+#                 "✓ AtlasAI — Unlimited RAG queries",
+#                 "✓ EchoAI — 100 queries/day (all speeds)",
+#                 "✓ Advanced AI Insights",
+#                 "✓ Priority Support",
+#                 "✓ Profile Insights Analytics",
+#             ],
+#             "btn_text": "Upgrade to Plus",
+#             "btn_key": "price_plus"
+#         },
+#         "Pro": {
+#             "price": "₹1,499",
+#             "period": "per year",
+#             "subtitle": "For power users",
+#             "features": [
+#                 "✓ Everything in Plus, plus:",
+#                 "✓ EchoAI — Unlimited queries (all speeds)",
+#                 "✓ Smart Mode — Full Access",
+#                 "✓ Early Access to New AI Features",
+#                 "✓ Dedicated Support",
+#                 "✓ Annual billing — 2 Months Free",
+#             ],
+#             "btn_text": "Upgrade to Pro",
+#             "btn_key": "price_pro"
+#         }
+#     }
 
-    plans = [
-        {
-            "title": "Free",
-            "price": "$0",
-            "subtitle": "For curious learners",
-            "features": ["✓ Basic AI usage", "✓ Limited RAG queries", "✓ Community support"],
-            "btn_text": "Start for Free",
-            "btn_key": "price_free"
-        },
-        {
-            "title": "Pro",
-            "price": "$5",
-            "subtitle": "For serious students",
-            "features": ["✓ Unlimited AI queries", "✓ Advanced AI Insights", "✓ Faster response times", "✓ PDF & Video Analysis"],
-            "btn_text": "Get Pro Now",
-            "btn_key": "price_pro"
-        },
-        {
-            "title": "Premium",
-            "price": "$10",
-            "subtitle": "For institutions",
-            "features": ["✓ Advanced Analytics", "✓ Priority AI access", "✓ Personalized Learning Path", "✓ API Access"],
-            "btn_text": "Contact Sales",
-            "btn_key": "price_premium"
-        }
-    ]
+#     st.write(""); st.write(""); st.write("")
+#     st.markdown('<span id="pricing_section"></span>', unsafe_allow_html=True)
+#     st.markdown("<h2 style='text-align: center; font-size: 40px;'>Explore Plans</h2>", unsafe_allow_html=True)
 
-    cols = st.columns(3)
-    for i, plan in enumerate(plans):
-        with cols[i]:
-            features_html = "".join([f"<p style='margin: 8px 0;'>{f}</p>" for f in plan['features']])
+#     cols = st.columns(3)
+    
+#     for i, (plan_name, plan_data) in enumerate(PLANS.items()):
+#         with cols[i]:
+#             features_html = "".join([f"<p style='margin: 8px 0;'>{f}</p>" for f in plan_data['features']])
 
-            # ✅ Pricing card UI unchanged
-            st.markdown(f"""
-                <div class="pricing-card">
-                    <div>
-                        <h3 style="color: {'#3b82f6' if plan['title'] == 'Pro' else '#888'};">{plan['title']}</h3>
-                        <h1 style="margin: 20px 0; color: white;">{plan['price']}</h1>
-                        <p style="color: #666; margin-bottom: 30px;">{plan['subtitle']}</p>
-                        <div style="text-align: left; color: #aaa; font-size: 14px; border-top: 1px solid #222; padding-top: 20px;">
-                            {features_html}
-                        </div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
+#             # Highlight the Pro plan as the best value
+#             card_border = "#3b82f6" if plan_name == "Pro" else "#333"
 
-            # ✅ Real Streamlit buttons — connected to login/profile
-            if plan['btn_key'] == "price_free":
-                if st.button(plan['btn_text'], key=plan['btn_key'], use_container_width=True):
-                    st.session_state.page = "register"   # ✅ goes to register
-                    st.rerun()
+#             st.markdown(f"""
+#                 <div class="pricing-card" style="border: 1px solid {card_border}; padding: 20px; border-radius: 10px; height: 100%; background-color: #0d1117;">
+#                     <h3 style="color: #8B949E;">{plan_name}</h3>
+#                     <h1 style="margin: 10px 0; color: white;">{plan_data['price']}</h1>
+#                     <p style="color: #666; margin-bottom: 5px; font-size: 14px;">{plan_data['period']}</p>
+#                     <p style="color: #888; margin-bottom: 20px;">{plan_data['subtitle']}</p>
+#                     <div style="text-align: left; color: #aaa; font-size: 14px; border-top: 1px solid #222; padding-top: 20px; min-height: 250px;">
+#                         {features_html}
+#                     </div>
+#                 </div>
+#             """, unsafe_allow_html=True)
 
-            elif plan['btn_key'] == "price_pro":
-                if st.button(plan['btn_text'], key=plan['btn_key'], use_container_width=True):
-                    st.session_state.page = "login"      # ✅ login first then billing
-                    st.session_state.redirect_to = "billing"
-                    st.rerun()
-
-            elif plan['btn_key'] == "price_premium":
-                if st.button(plan['btn_text'], key=plan['btn_key'], use_container_width=True):
-                    st.session_state.page = "login"      # ✅ login first then billing
-                    st.session_state.redirect_to = "billing"
-                    st.rerun()
-
+#             # Button Logic
+#             if st.button(plan_data['btn_text'], key=plan_data['btn_key'], use_container_width=True):
+#                 if plan_name == "Free":
+#                     st.session_state.page = "register"
+#                 else:
+#                     st.session_state.page = "login"
+#                     st.session_state.redirect_to = "billing"
+#                 st.rerun()
 # --- 6. CTA & SCROLLER SECTION ---
 def render_cta_and_scroller():
     st.write(""); st.write(""); st.write(""); st.write(""); st.write("")
@@ -471,7 +544,7 @@ def render_cta_and_scroller():
         <div class="cta-card-bg">
             <h2 style="font-size: 42px; font-weight: 700; margin-bottom: 20px; color: #ffffff;">Ready to transform your study workflow?</h2>
             <p style="color: #8b949e; font-size: 18px; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">
-                Join thousands of students using <b>ChatStream</b> for instant logic and <b>Data AI</b> for mastering material.
+                Get clear answers with short explanations, along with the exact video and timestamp from your course.
             </p>
             <div style="display: flex; justify-content: center; gap: 25px; color: #ffffff; opacity: 0.7; font-size: 14px;">
                 <span>✓ No credit card</span><span>✓ 2 minute setup</span><span>✓ Privacy first</span>
@@ -479,7 +552,7 @@ def render_cta_and_scroller():
         </div>
         """, unsafe_allow_html=True)
 
-        # ✅ Connected to register page
+        #  Connected to register page
         if st.button("Get Started for Free", key="cta_btn", use_container_width=True):
             st.balloons()
             st.session_state.page = "register"
@@ -488,10 +561,10 @@ def render_cta_and_scroller():
     st.markdown("""
     <div class="scroll-container">
         <div class="scroll-content">
-            <div class="scroll-item">⚡ Instant Responses</div><div class="scroll-item">🔒 Local Data Privacy</div>
-            <div class="scroll-item">📚 Course Integration</div><div class="scroll-item">🎯 Personalized Learning</div>
-            <div class="scroll-item">🚀 Powered by Ollama</div><div class="scroll-item">📝 Smart Summaries</div>
-            <div class="scroll-item">⚡ Instant Responses</div><div class="scroll-item">🔒 Local Data Privacy</div>
+            <div class="scroll-item">Instant Responses</div><div class="scroll-item">Local Data Privacy</div>
+            <div class="scroll-item">Course Integration</div><div class="scroll-item">Personalized Learning</div>
+            <div class="scroll-item">Powered by Ollama</div><div class="scroll-item">Smart Summaries</div>
+            <div class="scroll-item">Instant Responses</div><div class="scroll-item">Local Data Privacy</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -519,7 +592,6 @@ def render_landing_page():
         render_navbar()
         render_hero()
         render_features()
-        render_pricing()
         render_cta_and_scroller()
         render_footer()
 

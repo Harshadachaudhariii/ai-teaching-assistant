@@ -362,9 +362,9 @@ BACKEND_URL = "http://localhost:8000"
 def render_forgot_password_flow():
     """
     3-Step Password Reset Flow — ALL CONNECTED TO BACKEND:
-    Step 1: Email Input      → POST /auth/forgot-password  ✅
-    Step 2: OTP Verification → POST /auth/verify-otp       ✅
-    Step 3: New Password     → POST /auth/reset-password   ✅
+    Step 1: Email Input      → POST /auth/forgot-password 
+    Step 2: OTP Verification → POST /auth/verify-otp      
+    Step 3: New Password     → POST /auth/reset-password   
     """
     if "reset_step" not in st.session_state:
         st.session_state.reset_step = "email"

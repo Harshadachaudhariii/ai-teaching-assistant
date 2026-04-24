@@ -296,7 +296,7 @@ def render_sidebar():
         if st.button("Activity Log"): st.session_state.view = "Activity"
 
         st.markdown('<div class="sidebar-title">OTHER</div>', unsafe_allow_html=True)
-        if st.button("Billing"): st.session_state.view = "Billing"
+        # if st.button("Billing"): st.session_state.view = "Billing"
         if st.button("About"): st.session_state.view = "About"
 
         st.markdown('<div class="logout-container">', unsafe_allow_html=True)
@@ -1401,18 +1401,18 @@ def add_activity(icon, event, detail):
         "detail": detail,
         "time": current_time
     })
-# --- BILLING / EXPLORE PLANS VIEW ---
-def render_billing():
-    from billing import render_billing as _billing
-    _billing()
+# # --- BILLING / EXPLORE PLANS VIEW ---
+# def render_billing():
+#     from billing import render_billing as _billing
+#     _billing()
 
-def render_plus_payment():
-    from billing import render_plus_payment as _plus
-    _plus()
+# def render_plus_payment():
+#     from billing import render_plus_payment as _plus
+#     _plus()
 
-def render_pro_payment():
-    from billing import render_pro_payment as _pro
-    _pro()
+# def render_pro_payment():
+#     from billing import render_pro_payment as _pro
+#     _pro()
 # --- ABOUT VIEW ---
 def render_about():
     # 1. Custom CSS for a centered 'Hero' look
@@ -1524,10 +1524,10 @@ def render_app():
         "Insights": render_insights,
         "AI": render_ai,
         "Activity": render_activity,
-        "Billing": render_billing,
+        # "Billing": render_billing,
         "About": render_about,
-        "Plus_Payment": render_plus_payment,
-        "Pro_Payment": render_pro_payment,
+        # "Plus_Payment": render_plus_payment,
+        # "Pro_Payment": render_pro_payment,
     }
 
     ROUTES.get(st.session_state.view, render_profile)()

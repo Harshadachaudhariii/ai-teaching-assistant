@@ -6,4 +6,10 @@
 
 5. for payments mode set which ai uses---> reset every 4 hours
 
-6 - google gmail not connected automatically
+6 - google gmail not connected automatically---
+
+7. i am not able to back if when in login page to landing pages
+
+8. footer pricing connect to pricing section
+
+9. landing page -- desgin ui done--> footer section 

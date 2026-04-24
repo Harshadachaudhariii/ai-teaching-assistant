@@ -23,7 +23,6 @@ PLANS = {
             "✓ EchoAI — Limited 10 queries/day",
             "✓ Basic AI Insights",
             "✓ Profile & Activity Log",
-            "✓ Community Support",
         ],
         "limits": {
             "echoai_daily": 10,
@@ -32,7 +31,7 @@ PLANS = {
         }
     },
     "Plus": {   # 🔁 Pro → Plus
-        "price": "₹199",
+        "price": "₹149",
         "period": "per month",
         "color": "#8B949E",
         "features": [
@@ -49,8 +48,8 @@ PLANS = {
             "insights": "advanced",
         }
     },
-    "Pro": {   # 🔁 Max → Pro
-        "price": "₹2,499",
+    "Pro": {   # Max → Pro
+        "price": "₹1,999",
         "period": "per year (save 58%)",
         "color": "#8B949E",
         "features": [
@@ -158,7 +157,7 @@ def render_billing():
 
     current_plan = st.session_state.plan
 
-    st.markdown("<h1 style='text-align:center; font-size:48px;'>Explore Plans</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center; font-size:48px;'>Try Plus free for 1 month</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; color:#8B949E;'>Choose the plan that fits your learning journey.</p>", unsafe_allow_html=True)
 
     # ---- CURRENT PLAN BANNER ----

@@ -340,7 +340,6 @@ def render_message(role, text):
         st.markdown(f'<div class="user-bubble">{text}</div><div style="clear:both"></div>', unsafe_allow_html=True)
     else:
         # ✅ Use logo image as avatar for both AI modes
-        import os
         logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "logo.png")
         try:
             from PIL import Image
@@ -455,7 +454,6 @@ def render_chat_interface():
 
     if chat['messages'] and chat['messages'][-1]['role'] == "user":
         # ✅ Load logo for avatar
-        import os
         logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "logo.png")
         try:
             from PIL import Image
