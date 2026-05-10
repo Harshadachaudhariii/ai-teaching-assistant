@@ -2,8 +2,9 @@
 
 import streamlit as st
 import requests
-from email_reset_pass import render_forgot_password_flow
+from modules.email_reset_pass import render_forgot_password_flow
 from PIL import Image
+from utils.cookies import cookies
 import os
 
 # --- 1. CONFIGURATION & STATE ---
@@ -161,7 +162,7 @@ def render_auth_system():
                             st.warning("Please enter email and password.")
                         else:
                             try:
-                                # ✅ Step 1: Login
+                                #  Step 1: Login
                                 res = requests.post(
                                     "http://localhost:8000/auth/login",
                                     json={"email": email, "password": password},
@@ -175,10 +176,11 @@ def render_auth_system():
                                     if not token:
                                         st.error("Login failed: No token received")
                                     else:
-                                        # ✅ Step 2: Save token
+                                        #  Step 2: Save token
                                         st.session_state.token = token
-
-                                        # ✅ Step 3: Fetch user info
+                                        cookies["token"] = token
+                                        cookies.save()
+                                        #  Step 3: Fetch user info
                                         me_res = requests.get(
                                             "http://localhost:8000/auth/me",
                                             headers={"Authorization": f"Bearer {token}"},
@@ -233,7 +235,7 @@ def render_auth_system():
                         st.error("Passwords do not match.")
                     else:
                         try:
-                            # ✅ Register API call
+                            #  Register API call
                             res = requests.post(
                                 "http://localhost:8000/auth/register",
                                 json={
@@ -263,26 +265,3 @@ def render_auth_system():
 
         elif st.session_state.page == "reset":
             render_forgot_password_flow()
-def setup_page():
-    """Handles page configuration and logo loading."""
-    # 1. Define paths (Frontend/modules/ -> Frontend/assets/logo.png)
-    base_dir = os.path.dirname(os.path.dirname(__file__))
-    logo_path = os.path.join(base_dir, "assets", "logo.png")
-
-    try:
-        # 2. Load the image file
-        logo_img = Image.open(logo_path)
-        
-        # 3. Apply the logo to the page configuration
-        st.set_page_config(
-            page_title="Nexa AI", 
-            page_icon=logo_img,  
-            layout="wide"
-        )
-    except Exception:
-        # Fallback if image path is incorrect
-        st.set_page_config(page_title="Nexa AI", layout="wide")
-# --- 4. EXECUTION ---
-if __name__ == "__main__":
-    setup_page()
-    render_auth_system()

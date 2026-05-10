@@ -7,7 +7,9 @@ from schemas.chat_schema import RAGRequest, ChatResponse
 from dependencies.auth import get_current_user
 from models.user import User
 from utils.logger import get_logger
-
+from db.database import get_db
+from sqlalchemy.orm import Session
+from api.eval import auto_eval_and_log
 logger = get_logger(__name__)
 
 router = APIRouter()
@@ -16,7 +18,8 @@ router = APIRouter()
 @router.post("/", response_model=ChatResponse)
 async def rag_endpoint(
     data: RAGRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     AtlasAI — RAG based
@@ -29,6 +32,18 @@ async def rag_endpoint(
         raise HTTPException(status_code=400, detail="Query is required")
 
     response = generate_rag_response(data.query)
+
+    # AUTO EVALUATION
+    try:
+        auto_eval_and_log(
+            db=db,
+            user_id=current_user.id,
+            question=data.query,
+            response=response,
+            mode="AtlasAI",
+        )
+    except Exception as e:
+        logger.error(f"[RAG API] Eval failed: {e}")
 
     logger.info(f"[RAG API] Response ready | user_id={current_user.id} | preview={response[:60]}")
     return {"response": response}

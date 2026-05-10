@@ -14,6 +14,8 @@ class Chat(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     assistant_name = Column(String, nullable=False) # "echoai" or "atlasai"
+    title= Column(String, default="New Chat")         
+    client_id= Column(String, nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     
@@ -24,3 +26,4 @@ class Chat(Base):
     def __repr__(self):
         logger.info(f"[CHAT MODEL] Chat object created: id={self.id} user_id={self.user_id}")
         return f"<Chat id={self.id} user_id={self.user_id}>"
+    

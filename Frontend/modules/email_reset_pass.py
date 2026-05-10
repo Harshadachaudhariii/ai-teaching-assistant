@@ -22,7 +22,7 @@
 # #     3-Step Password Reset Flow:
 # #     Step 1: Email Input      → POST /auth/forgot-password   [⚠️ NEEDS BACKEND]
 # #     Step 2: OTP Verification → POST /auth/verify-otp        [⚠️ NEEDS BACKEND]
-# #     Step 3: New Password     → POST /auth/reset-password    [✅ CONNECTED]
+# #     Step 3: New Password     → POST /auth/reset-password    [ CONNECTED]
 # #     """
 
 # #     # Initialize step state
@@ -138,7 +138,7 @@
 
 # #     # ==========================================
 # #     # STEP 3: RESET PASSWORD
-# #     # ✅ CONNECTED TO BACKEND
+# #     #  CONNECTED TO BACKEND
 # #     # ==========================================
 # #     elif st.session_state.reset_step == "new_password":
 # #         st.title("Reset Password")
@@ -165,7 +165,7 @@
 # #                 else:
 # #                     with st.spinner("Updating password..."):
 # #                         try:
-# #                             # ✅ STEP 3 — CONNECTED TO BACKEND
+# #                             #  STEP 3 — CONNECTED TO BACKEND
 # #                             # NOTE: This endpoint needs to be created in backend
 # #                             # api/auth.py → POST /auth/reset-password
 # #                             res = requests.post(
@@ -383,7 +383,7 @@ def render_forgot_password_flow():
 
 # ==========================================
 # STEP 1: EMAIL INPUT
-# ✅ POST /auth/forgot-password
+# POST /auth/forgot-password
 # ==========================================
 def render_email_step():
     st.title("Forgot Password")
@@ -429,7 +429,7 @@ def render_email_step():
 
 # ==========================================
 # STEP 2: OTP VERIFICATION
-# ✅ POST /auth/verify-otp
+#  POST /auth/verify-otp
 # ==========================================
 def render_otp_step():
     st.title("Verify OTP")
@@ -506,7 +506,7 @@ def render_otp_step():
 
 # ==========================================
 # STEP 3: RESET PASSWORD
-# ✅ POST /auth/reset-password
+#  POST /auth/reset-password
 # ==========================================
 def render_new_password_step():
     st.title("Reset Password")

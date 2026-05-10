@@ -66,7 +66,7 @@ from core.config import settings
 logger = get_logger(__name__)
 
 # -------------------- SIMILARITY THRESHOLD --------------------
-# ✅ Only return chunks with similarity > threshold (avoids hallucination)
+# only return chunks with similarity > threshold (avoids hallucination)
 SIMILARITY_THRESHOLD = 0.55
 TOP_K = 5
 

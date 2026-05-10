@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     # Ollama
     OLLAMA_BASE_URL: str = "http://localhost:11434"
 
-    # ✅ Email OTP Settings
+    #  Email OTP Settings
     EMAIL_HOST: str = "smtp.gmail.com"
     EMAIL_PORT: int = 587
     EMAIL_USERNAME: str = ""

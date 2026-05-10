@@ -1,4 +1,4 @@
-# modules/llm_ui.py
+# # modules/llm_ui.py
 
 import streamlit as st
 import time
@@ -7,8 +7,137 @@ from datetime import datetime
 import requests
 import os
 from PIL import Image
+from utils.cookies import cookies
+import re
 
-# --- 1. ARCHITECTURAL DESIGN SYSTEM (CSS) ---
+BACKEND_URL = "http://localhost:8000"
+def _h():
+    """Auth headers shorthand."""
+    return {"Authorization": f"Bearer {st.session_state.get('token', '')}"}
+
+_FILLER = re.compile(
+    r"^\s*("
+    r"tell\s+me(\s+about)?|what\s+is|what\s+are|what's|"
+    r"explain(\s+me)?|describe|define|"
+    r"how\s+(do|does|to|can)|"
+    r"can\s+you|could\s+you|please|"
+    r"i\s+want\s+to\s+(know|learn)|"
+    r"give\s+me|show\s+me|help\s+me(\s+with)?|"
+    r"write\s+(me\s+)?a|create\s+(me\s+)?a"
+    r")\s+",
+    re.IGNORECASE,
+)
+ 
+def _smart_title(prompt: str) -> str:
+    """
+    'tell me about computer networks' → 'Computer Networks'
+    'explain how HTTP works'          → 'How HTTP Works'
+    'what is a REST API?'             → 'REST API'
+    Max 5 words, title-cased, no punctuation.
+    """
+    text = _FILLER.sub("", prompt.strip())
+    if not text:
+        text = prompt.strip()
+    # Strip punctuation (keep hyphens/apostrophes inside words)
+    text = re.sub(r"[^\w\s\-']", "", text)
+    words = text.split()
+    if not words:
+        return prompt[:32]
+    # Title-case each word, cap at 5
+    title = " ".join(w.capitalize() for w in words[:5])
+    return title
+ 
+
+def _save_chat(cid: str):
+    """POST /history/save — upserts full chat after every AI reply."""
+    chat = st.session_state.chats.get(cid)
+    if not chat:
+        return
+    try:
+        requests.post(
+            f"{BACKEND_URL}/history/save",
+            json={
+                "client_id": cid,
+                "title":     chat["title"],
+                "mode":      chat["mode"],
+                "messages":  chat["messages"],
+            },
+            headers=_h(), timeout=8,
+        )
+    except Exception:
+        pass   # Local session still works if backend down
+ 
+ 
+def _rename_api(cid: str, title: str):
+    """PATCH /history/{cid}/title — persists renamed title to DB."""
+    try:
+        requests.patch(
+            f"{BACKEND_URL}/history/{cid}/title",
+            json={"title": title},
+            headers=_h(), timeout=5,
+        )
+    except Exception:
+        pass
+ 
+ 
+def _delete_api(cid: str):
+    """DELETE /history/{cid} — permanently removes chat + messages from DB."""
+    try:
+        requests.delete(
+            f"{BACKEND_URL}/history/{cid}",
+            headers=_h(), timeout=5,
+        )
+    except Exception:
+        pass
+ 
+ 
+def load_chats():
+    """
+    GET /history/ → rebuild chats dict from DB.
+    Called once per session (chats_loaded flag prevents re-fetch).
+    Issue 1: always uses fresh DB state — no stale session cache.
+    """
+    if st.session_state.get("chats_loaded"):
+        return
+    try:
+        res = requests.get(f"{BACKEND_URL}/history/", headers=_h(), timeout=8)
+        if res.status_code == 200:
+            loaded: dict = {}
+            for c in res.json():
+                cid = c.get("client_id") or str(uuid.uuid4())
+                loaded[cid] = {
+                    "title":     c["title"],
+                    "messages":  c["messages"],
+                    "mode":      c["mode"],
+                    "ts":        c.get("created_at", "")[:16].replace("T", " "),
+                    # title_set: True means AI or user already set a real title
+                    "title_set": bool(c["title"]) and c["title"] != "New Chat",
+                }
+            st.session_state.chats = loaded
+    except Exception:
+        pass   # Keep empty dict — user can still create chats
+    finally:
+        st.session_state.chats_loaded = True   # Don't retry even on error
+ 
+# def _send_cancel():
+#     """
+#     POST /chat/cancel → backend sets threading.Event → Ollama stream closes.
+#     Then resets local generating state.
+#     """
+#     rid = st.session_state.get("active_request_id")
+#     if rid:
+#         try:
+#             requests.post(
+#                 f"{BACKEND_URL}/chat/cancel",
+#                 json={"request_id": rid},
+#                 headers=_h(), timeout=3,
+#             )
+#         except Exception:
+#             pass   # Even if cancel request fails, local state is reset
+#     st.session_state.active_request_id = None
+#     st.session_state.is_generating     = False
+
+
 def inject_ui_styles():
     st.markdown(f"""
         <style>
@@ -124,12 +253,13 @@ def inject_ui_styles():
             background-color: rgba(59,130,246,0.08) !important;
             border-radius: 6px !important;
         }}
-        .chat-scroll-area {{
+        /*.chat-scroll-area {{
             max-height: calc(100vh - 520px);
             overflow-y: auto;
             overflow-x: hidden;
             padding: 4px 2px;
-        }}
+            border: none !important;
+        }}*/
 
         /* scrollbar */
         .chat-scroll-area::-webkit-scrollbar {{
@@ -186,169 +316,74 @@ div[data-testid="stPopoverBody"] button:hover {{
                         </style>
     """, unsafe_allow_html=True)
 
-# --- 2. CORE ENGINE & STATE ---
-def init_store():
-    if "chats" not in st.session_state: st.session_state.chats = {}
-    if "active_id" not in st.session_state: st.session_state.active_id = None
-    if "ai_mode" not in st.session_state: st.session_state.ai_mode = "AtlasAI"
-    if "echo_speed" not in st.session_state: st.session_state.echo_speed = "default"
-    if "rename_cid" not in st.session_state: st.session_state.rename_cid = None
-
+        
+        
 def create_thread():
     cid = str(uuid.uuid4())
     st.session_state.chats[cid] = {
-        "title": "New Chat",
-        "messages": [],
-        "mode": st.session_state.ai_mode,
-        "ts": datetime.now().strftime("%H:%M")
+        "title":     "New Chat",
+        "messages":  [],
+        "mode":      st.session_state.ai_mode,
+        "ts":        datetime.now().strftime("%H:%M"),
+        "title_set": False,
     }
     st.session_state.active_id = cid
 
-# -------------------- DELETE DIALOG --------------------
+@st.dialog("Rename Chat")
+def dlg_rename(cid: str):
+    current = st.session_state.chats.get(cid, {}).get("title", "")
+    new_t   = st.text_input("New title", value=current, max_chars=50)
+    c1, c2  = st.columns(2)
+    with c1:
+        if st.button("Save", type="primary", use_container_width=True):
+            t = new_t.strip()
+            if t and t != current:
+                # Issue 1: PATCH to DB first, then update local state
+                _rename_api(cid, t)
+                st.session_state.chats[cid]["title"]     = t
+                st.session_state.chats[cid]["title_set"] = True
+            st.rerun()
+    with c2:
+        if st.button("Cancel", use_container_width=True):
+            st.rerun()
+ 
+ 
 @st.dialog("Delete Chat?")
-def delete_chat_dialog(cid):
-    title = st.session_state.chats[cid]["title"]
-    st.write(f'Are you sure you want to delete **"{title}"**?')
-    st.warning("This action cannot be undone.")
-    col1, col2 = st.columns(2)
-    with col1:
+def dlg_delete(cid: str):
+    title = st.session_state.chats.get(cid, {}).get("title", "this chat")
+    st.markdown(f"Permanently delete **\"{title}\"**?")
+    st.caption("This cannot be undone.")
+    c1, c2 = st.columns(2)
+    with c1:
         if st.button("Delete", type="primary", use_container_width=True):
-            del st.session_state.chats[cid]
+            # Issue 1: DELETE from DB first
+            _delete_api(cid)
+            # Remove from local state — will NOT reappear after re-login
+            st.session_state.chats.pop(cid, None)
             if st.session_state.active_id == cid:
                 st.session_state.active_id = None
             st.rerun()
-    with col2:
-        if st.button("Cancel", type="secondary", use_container_width=True):
+    with c2:
+        if st.button("Cancel", use_container_width=True):
             st.rerun()
+            
 
-# -------------------- RENAME DIALOG --------------------
-@st.dialog("Rename Chat")
-def rename_chat_dialog(cid):
-    current_title = st.session_state.chats[cid]["title"]
-    new_title = st.text_input("New name", value=current_title, max_chars=40)
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Save", type="primary", use_container_width=True):
-            if new_title.strip():
-                st.session_state.chats[cid]["title"] = new_title.strip()
-            st.rerun()
-    with col2:
-        if st.button("Cancel", type="secondary", use_container_width=True):
-            st.rerun()
-
-# --- 3. UI COMPONENTS ---
-def render_sidebar():
-    with st.sidebar:
-
-        # -------- LOGO --------
-        st.markdown("<h2 style='letter-spacing:-1.5px; font-weight:600;'>Nexa<span style='color:#3b82f6;'>AI</span></h2>", unsafe_allow_html=True)
-        st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
-
-        # -------- AI MODE --------
-        mode = st.radio(
-            "Choose Assistant",
-            ["AtlasAI", "EchoAI"],
-            help="AtlasAI: Video-based learning | EchoAI: Quick answers"
-        )
-
-        if st.session_state.ai_mode == "EchoAI":
-            speed = st.radio(
-                "Response Speed",
-                ["Default", "Fast", "Smart"],
-                index={"default": 0, "fast": 1, "smart": 2}.get(st.session_state.echo_speed, 0),
-                help="Default: llama3 | Fast: phi3-mini | Smart: qwen2.5:7b"
-            )
-            st.session_state.echo_speed = {"Default": "default", "Fast": "fast", "Smart": "smart"}[speed]
-
-        if mode != st.session_state.ai_mode:
-            st.session_state.ai_mode = mode
-            st.session_state.active_id = None
-            st.rerun()
-
-        # -------- NEW CHAT --------
-        st.markdown("---")
-        if st.button("＋ New Chat", use_container_width=True):
-            create_thread()
-            st.rerun()
-
-        # -------- HISTORY LABEL --------
-        st.markdown(
-            '<div style="color:#4b5563; font-size:0.7rem; font-weight:700; text-transform:uppercase; margin:12px 0 6px 5px;">History</div>',
-            unsafe_allow_html=True
-        )
-
-        # -------- SEARCH --------
-        find_chat = st.text_input("Find Chat", placeholder="Search Chat...", label_visibility="collapsed")
-
-        chat_list = list(reversed(list(st.session_state.chats.items())))
-        filtered_chats = [item for item in chat_list if find_chat.lower() in item[1]['title'].lower()]
-
-        # -------- SCROLLABLE AREA — open div --------
-        st.markdown('<div class="chat-scroll-area">', unsafe_allow_html=True)
-
-        if not filtered_chats:
-            st.caption("No chat found.")
-        else:
-            for cid, data in filtered_chats:
-                is_active = cid == st.session_state.active_id
-                cols = st.columns([0.78, 0.22])
-                with cols[0]:
-                    label = f"{data['title'][:16]}"
-                    if st.button(label, key=f"n_{cid}", type="primary" if is_active else "secondary"):
-                        st.session_state.active_id = cid
-                        st.rerun()
-                with cols[1]:
-                    with st.popover("•••"):
-                        if st.button("Rename", key=f"ren_{cid}", use_container_width=True):
-                            rename_chat_dialog(cid)
-                        if st.button("Delete", key=f"del_{cid}", use_container_width=True):
-                            delete_chat_dialog(cid)
-
-        # -------- SCROLLABLE AREA — close div --------
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # -------- STICKY BOTTOM --------
-        st.markdown('<div class="sidebar-bottom-section">', unsafe_allow_html=True)
-
-        user_name = st.session_state.get("profile_data", {}).get("name", "User")
-        user_initial = user_name[0].upper() if user_name else "U"
-
-        st.markdown(f"""
-            <div style='display:flex; align-items:center; gap:10px; padding:6px 5px;'>
-                <div style='background:#3b82f6; width:32px; height:32px; border-radius:50%;
-                     display:flex; align-items:center; justify-content:center;
-                     font-weight:bold; flex-shrink:0;'>{user_initial}</div>
-                <div>
-                    <p style='margin:0; font-size:0.85rem; font-weight:600;'>{user_name}</p>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-
-        if st.button("View Profile", use_container_width=True):
-            st.session_state.page = "profile"
-            st.rerun()
-
-        if st.button("Logout", use_container_width=True):
-            st.session_state.clear()
-            st.session_state.page = "login"
-            st.rerun()
-
-        st.markdown('</div>', unsafe_allow_html=True)
 
 def render_message(role, text):
     if role == "user":
         st.markdown(f'<div class="user-bubble">{text}</div><div style="clear:both"></div>', unsafe_allow_html=True)
     else:
-        # ✅ Use logo image as avatar for both AI modes
+        #  Use logo image as avatar for both AI modes
         logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "logo.png")
         try:
-            from PIL import Image
             logo = Image.open(logo_path)
             with st.chat_message("assistant", avatar=logo):
-                st.markdown(text)  # ✅ proper markdown rendering
+                st.markdown(text)  #  proper markdown rendering
         except Exception:
             with st.chat_message("assistant"):
                 st.markdown(text)
+
+
 
 def render_hero_screen():
     st.markdown("<br><br><br>", unsafe_allow_html=True)
@@ -401,64 +436,466 @@ def render_hero_screen():
         **Timestamp:** 12:40
                 """)
 
-def render_chat_interface():
-    st.markdown(f"""
-        <div style='display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e1e1e; padding-bottom: 10px; margin-bottom: 20px;'>
-            <h3 style='margin:0;'>{st.session_state.ai_mode}</h3>
-            <span style='background: #111; color: #3b82f6; font-size: 0.75rem; padding: 4px 12px; border-radius: 20px; border: 1px solid #3b82f6;'>Online</span>
-        </div>
+
+# ── REPLACE: guest_popup ────────────────────────────────────────
+@st.dialog("Please Login")
+def guest_popup():
+    st.markdown("Please login to continue")
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("Continue with Login", use_container_width=True, type="primary"):
+            st.session_state.page = "login"
+            st.rerun()
+    with c2:
+        if st.button("Stay without Login", use_container_width=True):
+            # Close popup only — chat remains blocked (no token = no chat)
+            st.rerun()
+
+
+# ── REPLACE: init_store ─────────────────────────────────────────
+def init_store():
+    _defaults = {
+        "chats":             {},
+        "active_id":         None,
+        "ai_mode":           "AtlasAI",
+        "echo_speed":        "default",
+        "chats_loaded":      False,
+        "is_generating":     False,
+        "active_request_id": None,
+        # show_guest_popup removed — popup triggered on action, not on load
+    }
+    for k, v in _defaults.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
+
+    # Load chat history from DB once per session (only when logged in)
+    if st.session_state.get("token") and not st.session_state.chats_loaded:
+        load_chats()
+
+
+def render_sidebar():
+    # ── Extra CSS for ChatGPT-style chat rows (no border, hover only) ──
+    # Injected here so it stays with the sidebar logic, not in inject_ui_styles
+    st.markdown("""
+        <style>
+
+/* ─────────────────────────────────────────────
+   CHAT ROW BUTTON
+   ───────────────────────────────────────────── */
+[data-testid="stSidebar"] div.stButton > button {
+
+    /* remove default styles */
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+
+    /* left alignment */
+    /* FORCE REAL LEFT ALIGN */
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+
+    text-align: left !important;
+    width: 100% !important;
+
+    padding-left: 12px !important;
+
+    flex-direction: row !important;
+
+    /* compact spacing */
+    padding: 4px 8px !important;
+    margin: 0 !important;
+    min-height: 34px !important;
+
+    /* text */
+    color: #d1d5db !important;
+    font-size: 0.84rem !important;
+    font-weight: 400 !important;
+
+    /* shape */
+    border-radius: 7px !important;
+
+    /* remove animation */
+    transform: none !important;
+    transition: background-color 0.12s ease !important;
+
+    /* flush left */
+    width: 100% !important;
+    
+}
+    [data-testid="stSidebar"] div.stButton > button p {
+    text-align: left !important;
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+[data-testid="stSidebar"] div.stButton > button div {
+    justify-content: flex-start !important;
+}
+
+/* ─────────────────────────────────────────────
+   HOVER EFFECT
+   ───────────────────────────────────────────── */
+[data-testid="stSidebar"] div.stButton > button:hover {
+
+    background-color: rgba(255,255,255,0.08) !important;
+
+    border: none !important;
+    box-shadow: none !important;
+    color: #ffffff !important;
+    transform: none !important;
+}
+
+
+/* ─────────────────────────────────────────────
+   ACTIVE CHAT
+   ───────────────────────────────────────────── */
+.active-chat-btn button {
+
+    background-color: rgba(255,255,255,0.10) !important;
+    color: #ffffff !important;
+    font-weight: 500 !important;
+}
+
+
+/* ─────────────────────────────────────────────
+   REMOVE EXTRA GAP BETWEEN CHAT ROWS
+   ───────────────────────────────────────────── */
+[data-testid="stSidebar"] .element-container {
+
+    margin-bottom: 0px !important;
+padding-bottom: 0px !important;
+}
+
+/* ─────────────────────────────────────────────
+   CHAT LIST AREA
+   ───────────────────────────────────────────── */
+.chat-scroll-area {
+
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+}
+
+
+/* ─────────────────────────────────────────────
+   REMOVE EXTRA COLUMN SPACING
+   ───────────────────────────────────────────── */
+[data-testid="column"] {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* ─────────────────────────────────────────────
+   THREE DOTS BUTTON
+   ───────────────────────────────────────────── */
+[data-testid="stSidebar"] div[data-testid="stPopover"] > div > button {
+
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+
+    color: #6b7280 !important;
+
+    padding: 2px 4px !important;
+    margin: 0 !important;
+
+    min-height: 30px !important;
+    width: auto !important;
+    min-width: unset !important;
+
+    font-size: 1rem !important;
+    line-height: 1 !important;
+
+    writing-mode: horizontal-tb !important;
+
+    transition: background-color 0.12s ease !important;
+}
+
+
+/* ─────────────────────────────────────────────
+   THREE DOTS HOVER
+   ───────────────────────────────────────────── */
+[data-testid="stSidebar"] div[data-testid="stPopover"] > div > button:hover {
+
+    background-color: rgba(255,255,255,0.08) !important;
+    color: #ffffff !important;
+
+    border: none !important;
+    box-shadow: none !important;
+}
+
+
+/* ─────────────────────────────────────────────
+   REMOVE DEFAULT STREAMLIT BUTTON SPACING
+   ───────────────────────────────────────────── */
+[data-testid="stSidebar"] .stButton {
+
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* CHAT BUTTON TIGHT */
+[data-testid="stSidebar"] .stButton {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+}
+
+/* BUTTON HEIGHT */
+[data-testid="stSidebar"] div.stButton > button {
+    min-height: 35px !important;
+    height: 35px !important;
+    margin: 0 !important;
+}
+    /* ─────────────────────────────────────────────
+   EXPANDER CLEANUP
+   ───────────────────────────────────────────── */
+
+[data-testid="stExpander"],
+details {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* remove arrow */
+summary {
+    list-style: none !important;
+    display: flex !important;
+    padding: 0 !important;
+}
+
+summary svg {
+    display: none !important;
+}
+
+/* remove spacing inside expander */
+[data-testid="stExpanderDetails"] [data-testid="stVerticalBlock"] {
+    gap: 0px !important;
+}
+
+/* make each chat row tight */
+[data-testid="stHorizontalBlock"] {
+    gap: 0px !important;
+    align-items: left !important;
+    margin-bottom: 2px !important;
+}
+
+/* remove button extra spacing */
+[data-testid="stExpander"] .stButton {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* compact button height */
+[data-testid="stExpander"] div.stButton > button {
+    min-height: 34px !important;
+    height: 34px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+/* REMOVE EXPANDER BOTTOM LINE */
+[data-testid="stExpander"] {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+[data-testid="stExpander"] details {
+    border: none !important;
+}
+
+[data-testid="stExpander"] summary {
+    border: none !important;
+}
+
+[data-testid="stExpanderDetails"] {
+    border: none !important;
+}
+</style>
     """, unsafe_allow_html=True)
+ 
+    with st.sidebar:
+ 
+        # -------- LOGO --------
+        st.markdown("<h2 style='letter-spacing:-1.5px; font-weight:600;'>NexaAI</h2>",
+                    unsafe_allow_html=True)
+        st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
+ 
+        # -------- AI MODE --------
+        mode = st.radio(
+            "Choose Assistant",
+            ["AtlasAI", "EchoAI"],
+            horizontal=True,
+            help="AtlasAI: Video-based learning | EchoAI: Quick answers"
+        )
+        if mode != st.session_state.ai_mode:
+            st.session_state.ai_mode   = mode
+            st.session_state.active_id = None
+            st.rerun()
+ 
+        if st.session_state.ai_mode == "EchoAI":
+            speed = st.radio(
+                "Response Speed",
+                ["Default", "Fast", "Smart"],
+                index={"default": 0, "fast": 1, "smart": 2}.get(
+                    st.session_state.echo_speed, 0),
+                horizontal=True,
+            )
+            st.session_state.echo_speed = {
+                "Default": "default", "Fast": "fast", "Smart": "smart"
+            }[speed]
+ 
+        # -------- NEW CHAT --------
+        st.markdown("---")
+        if st.button("＋ New Chat", use_container_width=True):
+            if not st.session_state.get("token"):
+                guest_popup()   # blocked — popup only
+            else:
+                create_thread()
+                st.rerun()
+ 
+ 
+        # -------- SEARCH --------
+        find_chat = st.text_input(
+            "Find Chat", placeholder="Search Chat...", label_visibility="collapsed"
+        )
+        # -------- HISTORY LABEL --------
+        st.markdown(
+    f'<div style="color:#4b5563; font-size:0.7rem; font-weight:700;'
+    f' text-transform:uppercase; margin:12px 0 6px 5px;">'
+    f'{st.session_state.ai_mode} Chats</div>',
+    unsafe_allow_html=True
+)
+        chat_list = list(reversed(list(st.session_state.chats.items())))
 
+        filtered = [
+            (cid, d)
+            for cid, d in chat_list
+            if (
+                find_chat.lower() in d["title"].lower()
+                and d.get("mode") == st.session_state.ai_mode
+            )
+        ]
+
+ 
+        # -------- SCROLLABLE AREA --------
+        st.markdown('<div class="chat-scroll-area">', unsafe_allow_html=True)
+
+        # -------- CURRENT MODE CHATS --------
+        with st.expander(f"{st.session_state.ai_mode} Chats", expanded=True):
+
+            if not filtered:
+                st.caption(f"No {st.session_state.ai_mode} chats")
+
+            for cid, data in filtered:
+
+                is_active = cid == st.session_state.active_id
+
+                if is_active:
+                    st.markdown('<div class="active-chat-btn">', unsafe_allow_html=True)
+
+                cols = st.columns([0.82, 0.18], gap="small")
+
+                with cols[0]:
+                    if st.button(
+                        data["title"][:22],
+                        key=f"chat_{cid}",
+                        use_container_width=True,
+                    ):
+                        st.session_state.active_id = cid
+                        st.rerun()
+
+                with cols[1]:
+                    with st.popover("⋯"):
+
+                        if st.button(
+                            "Rename",
+                            key=f"ren_{cid}",
+                            use_container_width=True
+                        ):
+                            dlg_rename(cid)
+
+                        if st.button(
+                            "Delete",
+                            key=f"del_{cid}",
+                            use_container_width=True
+                        ):
+                            dlg_delete(cid)
+
+                if is_active:
+                    st.markdown("</div>", unsafe_allow_html=True)
+ 
+        # -------- BOTTOM SECTION --------
+        st.markdown('<div class="sidebar-bottom-section">', unsafe_allow_html=True)
+ 
+        if st.session_state.get("token"):
+            user_name = st.session_state.get("profile_data", {}).get("name", "")
+            if user_name:
+                initial = user_name[0].upper()
+                st.markdown(f"""
+                    <div style='display:flex; align-items:center; gap:10px; padding:6px 5px;'>
+                        <div style='background:#3b82f6; width:30px; height:30px; border-radius:50%;
+                             display:flex; align-items:center; justify-content:center;
+                             font-weight:bold; font-size:0.8rem; flex-shrink:0;'>{initial}</div>
+                        <p style='margin:0; font-size:0.83rem; font-weight:600;
+                                  color:#e5e7eb; white-space:nowrap; overflow:hidden;
+                                  text-overflow:ellipsis;'>{user_name}</p>
+                    </div>
+                """, unsafe_allow_html=True)
+ 
+            if st.button("Logout", use_container_width=True):
+
+                # Remove saved cookie token
+                cookies["token"] = ""
+                cookies.save()
+
+                # Clear session
+                for k in list(st.session_state.keys()):
+                    del st.session_state[k]
+
+                st.session_state.page = "login"
+                st.rerun()
+        else:
+            # Not logged in — show login button in sidebar
+            if st.button("Login / Sign up", type="primary",
+                         use_container_width=True):
+                st.session_state.page = "login"
+                st.rerun()
+ 
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# ── REPLACE: render_chat_interface ──────────────────────────────
+def render_chat_interface():
     chat = st.session_state.chats[st.session_state.active_id]
+    cid  = st.session_state.active_id
+    st.caption("NexaAI can make mistakes. Check important info.")
+    for msg in chat["messages"]:
+        render_message(msg["role"], msg["content"])
 
-    if not chat['messages']:
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.info(f"**Welcome to your new {st.session_state.ai_mode} session.** Type your first message below or choose a starter.")
+    # ── Chat input — blocked for guests ──
+    prompt = st.chat_input(f"Message {st.session_state.ai_mode}...")
 
-    for msg in chat['messages']:
-        render_message(msg['role'], msg['content'])
+    if prompt:
+        if not st.session_state.get("token"):
+            guest_popup()     # show dialog; chat remains blocked after dismiss
+            st.stop()
 
-    if prompt := st.chat_input(f"Message {st.session_state.ai_mode}..."):
-        chat['messages'].append({"role": "user", "content": prompt})
+        chat["messages"].append({"role": "user", "content": prompt})
 
-        # ✅ AI-generated title — short, meaningful, based on user query
-        if chat['title'] == "New Chat":
-            try:
-                token = st.session_state.get("token")
-                headers = {"Authorization": f"Bearer {token}"}
-                title_res = requests.post(
-                    "http://localhost:8000/chat/",
-                    json={
-                        "messages": [
-                            {
-                                "role": "user",
-                                "content": f"Generate a short chat title (max 5 words, no quotes, no punctuation) for this message: {prompt}"
-                            }
-                        ],
-                        "speed": "fast"
-                    },
-                    headers=headers,
-                    timeout=5
-                )
-                if title_res.status_code == 200:
-                    ai_title = title_res.json().get("response", "").strip()
-                    # Clean up — remove quotes, newlines, limit length
-                    ai_title = ai_title.replace('"', '').replace("'", '').replace('\n', ' ').strip()
-                    chat['title'] = ai_title[:35] if ai_title else prompt[:25] + "..."
-                else:
-                    chat['title'] = prompt[:25] + "..."
-            except Exception:
-                chat['title'] = prompt[:25] + "..."
+        # ── Issue 4: local smart title — no API call ──
+        if not chat.get("title_set"):
+            chat["title"]     = _smart_title(prompt)
+            chat["title_set"] = True
 
         st.rerun()
-
-    if chat['messages'] and chat['messages'][-1]['role'] == "user":
-        # ✅ Load logo for avatar
-        logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "logo.png")
+        
+    # ── Generate AI response ──
+    if chat["messages"] and chat["messages"][-1]["role"] == "user":
+        logo_path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), "assets", "logo.png"
+        )
         try:
-            from PIL import Image
-            logo = Image.open(logo_path)
-            avatar = logo
+            avatar = Image.open(logo_path)
         except Exception:
             avatar = None
 
@@ -466,81 +903,95 @@ def render_chat_interface():
             ph = st.empty()
             ph.markdown("Thinking...")
 
+            full = ""   # ALWAYS initialize
+
             try:
                 token = st.session_state.get("token")
                 headers = {"Authorization": f"Bearer {token}"}
 
+                # ─────────────────────────────
+                # AtlasAI (NON-STREAM)
+                # ─────────────────────────────
                 if st.session_state.ai_mode == "AtlasAI":
                     api_res = requests.post(
-                        "http://localhost:8000/rag/",
-                        json={"query": chat['messages'][-1]['content']},
+                        f"{BACKEND_URL}/rag/",
+                        json={"query": chat["messages"][-1]["content"]},
                         headers=headers,
-                        timeout=60
-                    )
-                else:
-                    api_res = requests.post(
-                        "http://localhost:8000/chat/",
-                        json={
-                            "messages": chat['messages'],
-                            "speed": st.session_state.echo_speed
-                        },
-                        headers=headers,
-                        timeout=180
+                        timeout=60,
                     )
 
-                if api_res.status_code == 200:
-                    full = api_res.json().get("response", "No response")
+                    if api_res.status_code == 200:
+                        full = api_res.json().get("response", "")
+                    else:
+                        full = f"Error: {api_res.text}"
+
+                # ─────────────────────────────
+                # EchoAI (STREAM)
+                # ─────────────────────────────
                 else:
-                    full = f"Error: {api_res.json().get('detail', 'Something went wrong')}"
+                    if st.session_state.echo_speed not in ["default", "fast", "smart"]:
+                        st.session_state.echo_speed = "default"
+                    stream_res = requests.post(
+                        f"{BACKEND_URL}/chat/stream",
+                        json={
+                            "messages": chat["messages"],
+                            "speed": st.session_state.echo_speed,
+                            "request_id": str(uuid.uuid4())
+                        },
+                        headers=headers,
+                        stream=True,
+                        timeout=300,
+                    )
+
+                    try:
+                        for line in stream_res.iter_lines():
+                            if not line:
+                                continue
+
+                            decoded = line.decode("utf-8")
+
+                            if decoded.startswith("data: "):
+                                token = decoded.replace("data: ", "")
+
+                                if token == "[DONE]":
+                                    break
+
+                                if token.startswith("__rid__"):
+                                    continue
+
+                                full += token
+                                ph.markdown(full + "▌")
+
+                    finally:
+                        stream_res.close()   # IMPORTANT CLEANUP
 
             except requests.exceptions.Timeout:
                 full = "Request timed out. Please try again."
             except Exception as e:
                 full = f"Error: {str(e)}"
 
-            # ✅ Streaming effect word by word
-            display = ""
-            for chunk in full.split():
-                display += chunk + " "
-                time.sleep(0.02)
-                # Show plain text while streaming
-                ph.markdown(display + "▌")
-
-            # ✅ Final render with proper markdown (code blocks, bold, etc.)
+            # final render
             ph.markdown(full)
-            chat['messages'].append({"role": "assistant", "content": full})
 
-# --- 4. THE MASTER WRAPPER FUNCTION ---
+            chat["messages"].append({
+                "role": "assistant",
+                "content": full
+            })
+
+            _save_chat(cid)
+
+
+
+# ── REPLACE: render_nexus_app ───────────────────────────────────
 def render_nexus_app():
     inject_ui_styles()
     init_store()
     render_sidebar()
 
+    # No token → show hero/chat UI but chat is gated by guest_popup
+    # (sidebar + hero visible to everyone, input blocked without login)
     if not st.session_state.active_id:
         render_hero_screen()
     else:
         render_chat_interface()
-
-# --- 5. ENTRY POINT ---
-def main():
-    base_dir = os.path.dirname(os.path.dirname(__file__))
-    logo_path = os.path.join(base_dir, "assets", "logo.png")
-
-    try:
-        # 2. Load the image file
-        logo_img = Image.open(logo_path)
         
-        # 3. Apply the logo to the page configuration
-        st.set_page_config(
-            page_title="Nexa AI", 
-            page_icon=logo_img,  # ✅ This adds the logo to your browser tab
-            layout="wide"
-        )
-    except Exception:
-        # Fallback if image path is incorrect
-        st.set_page_config(page_title="Nexa AI", layout="wide")
-
-    render_nexus_app()
-
-if __name__ == "__main__":
-    main()
