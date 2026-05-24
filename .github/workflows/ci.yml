@@ -25,6 +25,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Show Python info
+        run: |
+          python -V
+          python -m pip --version
+          python -m pip list
+
       - name: Cache pip
         uses: actions/cache@v4
         with:
@@ -41,9 +47,10 @@ jobs:
           
           pip install pytest
 
-      - name: Run tests
+      - name: Run tests (verbose + junit)
         working-directory: backend
-        run: python -m pytest -q
+        run: |
+          python -m pytest -q -vv --junitxml=backend/test-results.xml 2>&1 | tee backend/pytest.log
 
       - name: Upload test results 
         if: always()
