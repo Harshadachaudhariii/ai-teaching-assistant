@@ -134,10 +134,6 @@ done
 - `docker/` — Dockerfiles for backend/frontend
 - `.github/workflows/ci.yml` — CI workflow
 
-**Notes & next steps**
-- If you plan to deploy to production, consider using Postgres instead of SQLite and pinning `requirements.txt` to exact versions.
-- Add repository secrets in GitHub (Settings → Secrets) if your workflow or deployment needs API keys.
-- I can help pin `requirements.txt`, add linting/coverage to CI, or prepare a Docker deployment manifest for a cloud provider.
 
 
 
