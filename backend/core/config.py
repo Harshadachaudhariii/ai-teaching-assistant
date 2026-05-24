@@ -1,6 +1,6 @@
 # core/config.py
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -29,9 +29,11 @@ class Settings(BaseSettings):
     # OTP expiry in minutes
     OTP_EXPIRE_MINUTES: int = 5
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    # Modern Pydantic V2 Configuration
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8"
+    )
 
 # -------------------- INSTANCE --------------------
 settings = Settings()

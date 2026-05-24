@@ -1,6 +1,6 @@
 # schemas/user_schema.py
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from datetime import datetime
 from utils.logger import get_logger
 
@@ -13,8 +13,8 @@ class UserResponse(BaseModel):
     email: EmailStr
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    # Modern Pydantic V2 Configuration
+    model_config = ConfigDict(from_attributes=True)
 
 # -------------------- USER UPDATE --------------------
 class UserUpdateRequest(BaseModel):

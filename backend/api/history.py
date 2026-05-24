@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
 from db.database import get_db
@@ -24,8 +24,8 @@ class MessageOut(BaseModel):
     role: str
     content: str
     timestamp: datetime | None = None
-    class Config:
-        from_attributes = True
+    # Modern Pydantic V2 Configuration
+    model_config = ConfigDict(from_attributes=True)
 
 class ChatOut(BaseModel):
     id: int
@@ -34,8 +34,9 @@ class ChatOut(BaseModel):
     mode: str
     created_at: datetime
     messages: List[MessageOut]
-    class Config:
-        from_attributes = True
+     # Modern Pydantic V2 Configuration
+    model_config = ConfigDict(from_attributes=True)
+
 
 class SaveChatRequest(BaseModel):
     client_id: str          # frontend uuid — so we can sync

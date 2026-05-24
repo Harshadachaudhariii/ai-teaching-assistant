@@ -1,6 +1,6 @@
 # schemas/chat_schema.py
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import List, Optional
 from utils.logger import get_logger
@@ -13,8 +13,8 @@ class MessageSchema(BaseModel):
     content: str
     timestamp: datetime | None = None
 
-    class Config:
-        from_attributes = True
+    # Modern Pydantic V2 Configuration
+    model_config = ConfigDict(from_attributes=True)
 
 # -------------------- CHAT REQUEST --------------------
 class ChatRequest(BaseModel):

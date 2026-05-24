@@ -31,6 +31,12 @@ jobs:
           python -m pip --version
           python -m pip list
 
+      - name: Show runner info
+        run: |
+          uname -a || ver
+          lsb_release -a || echo "no lsb_release"
+          cat /etc/os-release || echo "no /etc/os-release"
+
       - name: Cache pip
         uses: actions/cache@v4
         with:
@@ -60,3 +66,5 @@ jobs:
           path: |
             backend/.pytest_cache
             backend/tests
+            backend/test-results.xml
+            backend/pytest.log

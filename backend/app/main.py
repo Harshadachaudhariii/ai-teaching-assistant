@@ -1,5 +1,5 @@
 # app/main.py
-
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -28,11 +28,28 @@ logger = get_logger(__name__)
 Base.metadata.create_all(bind=engine)
 logger.info("[MAIN] Database tables created")
 
+# ── Lifespan Handler ──────────────────────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # This block executes BEFORE the server starts up (Startup)
+    logger.info("[MAIN] Server started successfully")
+    logger.info("[MAIN] EchoAI  → /chat")
+    logger.info("[MAIN] AtlasAI → /rag")
+    logger.info("[MAIN] Auth    → /auth")
+    logger.info("[MAIN] User    → /user")
+    logger.info("[MAIN] Docs    → /docs")
+    
+    yield  # The app runs and handles requests here
+    
+    # This block executes AFTER the server receives a shutdown signal (Shutdown)
+    logger.info("[MAIN] Server shutting down...")
+    
 # ── App ───────────────────────────────────────────────────────
 app = FastAPI(
     title="AI Teaching Assistant",
     description="EchoAI + AtlasAI Backend",
     version="1.0.0",
+    lifespan=lifespan  # Registered the lifespan handler here
 )
 
 app.include_router(eval_router, prefix="/eval", tags=["Eval"])
@@ -55,7 +72,21 @@ app.include_router(rag_router,     prefix="/rag",     tags=["AtlasAI"])
 app.include_router(history_router, prefix="/history", tags=["History"])
 logger.info("[MAIN] All routers registered")
 
-
+# 1. Define the Lifespan (This replaces @app.on_event)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Everything here runs on STARTUP
+    logger.info("[MAIN] Server started successfully")
+    logger.info("[MAIN] EchoAI  → /chat")
+    logger.info("[MAIN] AtlasAI → /rag")
+    logger.info("[MAIN] Auth    → /auth")
+    logger.info("[MAIN] User    → /user")
+    logger.info("[MAIN] Docs    → /docs")
+    
+    yield  # This acts as the separator. The app runs here.
+    
+    # Everything here runs on SHUTDOWN
+    logger.info("[MAIN] Server shutting down...")
 @app.get("/")
 def root():
     logger.info("[MAIN] Root endpoint hit")
@@ -65,17 +96,3 @@ def root():
         "version": "1.0.0",
     }
 
-
-@app.on_event("startup")
-async def startup_event():
-    logger.info("[MAIN] Server started successfully")
-    logger.info("[MAIN] EchoAI  → /chat")
-    logger.info("[MAIN] AtlasAI → /rag")
-    logger.info("[MAIN] Auth    → /auth")
-    logger.info("[MAIN] User    → /user")
-    logger.info("[MAIN] Docs    → /docs")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("[MAIN] Server shutting down...")
