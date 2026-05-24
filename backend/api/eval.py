@@ -19,6 +19,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 import json
+import re
 import uuid
 
 from db.database import get_db
@@ -71,7 +72,14 @@ def _build_eval_prompt(req: EvalRequest) -> str:
         )
 
     return f"""You are an LLM evaluator. Score the AI response below on the following metrics.
-Return ONLY valid JSON — no explanation outside the JSON.
+Return ONLY STRICT VALID JSON.
+
+DO NOT include:
+- markdown
+- comments
+- explanations
+- trailing commas
+- code fences
 
 Question: {req.question}
 {context_section}
@@ -87,9 +95,23 @@ Score each metric from 0.0 (worst) to 1.0 (best):
 }}
 
 Rules:
-- Return ONLY the JSON object, no markdown fences, no extra text.
+- Return ONLY valid raw JSON.
+- Output must start with and end with.
+- Do NOT write markdown.
+- Do NOT use ```json or code fences.
+- Do NOT add explanations outside JSON.
+- Do NOT add comments.
+- Do NOT add extra text before or after JSON.
+- Do NOT include trailing commas.
+- All keys and string values must use double quotes.
 - All float values must be between 0.0 and 1.0.
-- Be strict and calibrated — a score of 0.9+ means near-perfect.
+- Feedback must be a short single sentence only.
+- Be strict and calibrated:
+  - 0.9+ = near-perfect
+  - 0.7-0.8 = good but imperfect
+  - 0.5-0.6 = average
+  - below 0.5 = poor
+- If unsure, return conservative scores.
 """
 
 
@@ -120,14 +142,50 @@ def _run_eval(req: EvalRequest) -> EvalResult:
             raw = raw[4:]
     raw = raw.strip()
 
+    # ─────────────────────────────
+# JSON cleanup
+# ─────────────────────────────
+
     try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        logger.error(f"[EVAL] JSON parse failed: {raw[:200]}")
-        raise HTTPException(
-            status_code=500,
-            detail="LLM returned invalid JSON during evaluation."
-        )
+
+        # remove markdown fences
+        raw = raw.replace("```json", "")
+        raw = raw.replace("```", "")
+
+        # remove JS comments
+        raw = re.sub(r"//.*", "", raw)
+
+        # remove trailing commas
+        raw = re.sub(r",\s*}", "}", raw)
+        raw = re.sub(r",\s*]", "]", raw)
+
+        raw = raw.strip()
+        # remove accidental newlines inside keys/values
+        raw = raw.replace("\n", " ")
+
+        # remove duplicate spaces
+        raw = re.sub(r"\s+", " ", raw)
+        # Extract first JSON object only
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+
+        if not match:
+            raise ValueError("No JSON object found")
+
+        clean_json = match.group(0)
+
+        data = json.loads(clean_json)
+
+    except Exception:
+
+        logger.error(f"[EVAL] JSON parse failed: {raw[:300]}")
+
+        data = {
+            "relevance": 0.5,
+            "accuracy": 0.5,
+            "fluency": 0.5,
+            "overall": 0.5,
+            "feedback": "Evaluation parsing failed."
+        }
 
     # Clamp all floats to [0.0, 1.0]
     def _clamp(v, default=0.5):
@@ -179,7 +237,6 @@ async def evaluate_response(
 
     result = _run_eval(data)
 
-    # Optionally save to DB (simple log table — extend if needed)
     _log_eval(db, current_user.id, data, result)
 
     logger.info(

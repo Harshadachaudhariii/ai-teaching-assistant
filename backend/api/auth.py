@@ -1,12 +1,10 @@
 # api/auth.py
 
-# api/auth.py
-
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
-
+from fastapi import Request
 from db.database import get_db
 from services.auth_service import register_user, login_user
 from services.otp_service import create_and_send_otp, verify_otp
@@ -15,7 +13,11 @@ from schemas.auth_schema import RegisterRequest, LoginRequest
 from dependencies.auth import get_current_user
 from models.user import User
 from utils.logger import get_logger
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+import re
 
+limiter = Limiter(key_func=get_remote_address)
 logger = get_logger(__name__)
 
 router = APIRouter()
@@ -36,7 +38,8 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
 
 # -------------------- LOGIN --------------------
 @router.post("/login")
-def login(data: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def login( request: Request,data: LoginRequest, db: Session = Depends(get_db)):
     logger.info(f"[AUTH API] Login request | email={data.email}")
 
     result, error = login_user(db, data.email, data.password)
@@ -85,13 +88,14 @@ class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 
 @router.post("/forgot-password")
-def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+@limiter.limit("3/minute")
+def forgot_password( request: Request,data: ForgotPasswordRequest, db: Session = Depends(get_db)):
     logger.info(f"[AUTH API] Forgot password request | email={data.email}")
 
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
-        logger.warning(f"[AUTH API] User not found | email={data.email}")
-        raise HTTPException(status_code=404, detail="No account found with this email")
+        logger.warning(f"[AUTH API] Forgot password request received | email={data.email}")
+        return {"message": "If the account exists, OTP has been sent"}
 
     success, message = create_and_send_otp(db, data.email)
 
@@ -108,7 +112,8 @@ class VerifyOTPRequest(BaseModel):
     otp: str
 
 @router.post("/verify-otp")
-def verify_otp_endpoint(data: VerifyOTPRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def verify_otp_endpoint( request: Request,data: VerifyOTPRequest, db: Session = Depends(get_db)):
     logger.info(f"[AUTH API] Verify OTP | email={data.email}")
 
     success, message = verify_otp(db, data.email, data.otp)
@@ -120,6 +125,21 @@ def verify_otp_endpoint(data: VerifyOTPRequest, db: Session = Depends(get_db)):
     logger.info(f"[AUTH API] OTP verified | email={data.email}")
     return {"message": "OTP verified successfully"}
 
+def password_strength(pwd: str):
+    if not pwd:
+        return "No password entered"
+
+    if len(pwd) < 8:
+        return "Weak"
+
+    if (
+        re.search(r"[A-Z]", pwd) and
+        re.search(r"[a-z]", pwd) and
+        re.search(r"\d", pwd)
+    ):
+        return "Strong"
+
+    return "Medium"
 # -------------------- RESET PASSWORD --------------------
 class ResetPasswordRequest(BaseModel):
     email: EmailStr
@@ -134,8 +154,13 @@ def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if len(data.new_password) < 8:
-        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    strength = password_strength(data.new_password)
+
+    if strength != "Strong":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Password strength is {strength}. Use uppercase, lowercase, number and 8+ chars."
+        )
 
     user.password_hash = hash_password(data.new_password)
     db.commit()

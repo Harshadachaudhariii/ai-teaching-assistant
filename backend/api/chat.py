@@ -1,5 +1,6 @@
 # api/chat.py
-# EchoAI — Chat API (Merged Clean Version)
+# EchoAI — Chat API
+
 
 import asyncio
 import uuid
@@ -15,18 +16,19 @@ from dependencies.auth import get_current_user
 from models.user import User
 from utils.logger import get_logger
 from api.eval import auto_eval_and_log
+
 logger = get_logger(__name__)
 router = APIRouter()
 
 
 # ─────────────────────────────────────────────
-# 1. NON-STREAM (normal chat + DB save)
+# 1. NON-STREAM
 # ─────────────────────────────────────────────
 @router.post("/", response_model=ChatResponse)
 async def chat_endpoint(
     data: ChatRequest,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     logger.info(f"[CHAT API] Start | user_id={current_user.id} | messages={len(data.messages)}")
 
@@ -35,15 +37,8 @@ async def chat_endpoint(
 
     messages = [{"role": m.role, "content": m.content} for m in data.messages]
 
-    logger.info(f"[CHAT API] Handover to Service | user_id={current_user.id}")
-    response = generate_chat_response(
-        db,
-        current_user.id,
-        messages,
-        data.speed
-    )
+    response = generate_chat_response(db, current_user.id, messages, data.speed)
 
-    # AUTO EVALUATION
     try:
         auto_eval_and_log(
             db=db,
@@ -55,7 +50,7 @@ async def chat_endpoint(
     except Exception as e:
         logger.error(f"[CHAT API] Eval failed: {e}")
 
-        logger.info(f"[CHAT API] Success | user_id={current_user.id}")
+    logger.info(f"[CHAT API] Success | user_id={current_user.id}")
     return {"response": response}
 
 
@@ -71,32 +66,34 @@ async def chat_stream_endpoint(
     if not data.messages:
         raise HTTPException(status_code=400, detail="Messages required")
 
-    request_id = getattr(data, "request_id", None)
-
-    if not request_id:
-        request_id = str(uuid.uuid4())
+    request_id = getattr(data, "request_id", None) or str(uuid.uuid4())
     register_request(request_id)
 
     messages = [{"role": m.role, "content": m.content} for m in data.messages]
-    user_id = current_user.id
-    speed = data.speed
+    user_id  = current_user.id
+    speed    = data.speed
 
     logger.info(f"[CHAT STREAM] Start | user={user_id} | req={request_id}")
 
     async def event_generator():
         full = ""
-
         try:
             yield f"data: __rid__{request_id}\n\n"
-            chunks = stream_chat_response(db, user_id, messages, speed, request_id)
-            for chunk in chunks:
-                full += chunk
-                safe = chunk.replace("\n", "\\n").replace("\r", "")
-                yield f"data: {safe}\n\n"
+
+            for chunk in stream_chat_response(
+                    db,
+                    user_id,
+                    messages,
+                    speed,
+                    request_id
+                ):
+                    full += chunk
+                
+                    safe_chunk = chunk.replace("\n", "\\n")
+                    yield f"data: {safe_chunk}\n\n"
 
             yield "data: [DONE]\n\n"
 
-            # DB + evaluation AFTER streaming completes
             try:
                 auto_eval_and_log(
                     db=db,
@@ -110,14 +107,20 @@ async def chat_stream_endpoint(
 
         except asyncio.CancelledError:
             cancel_request(request_id)
-            logger.info(f"[CHAT STREAM] Cancelled {request_id}")
+            logger.info(f"[CHAT STREAM] Cancelled | req={request_id}")
+
+        except Exception as e:
+            logger.error(f"[CHAT STREAM] Error: {e} | req={request_id}")
+            yield f"data: [Error: {str(e)}]\n\n"
+            yield "data: [DONE]\n\n"
 
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
         headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
+            "Cache-Control":     "no-cache",
+            "Connection":        "keep-alive",
+            "X-Accel-Buffering": "no",   
         },
     )
 
@@ -131,10 +134,8 @@ async def cancel_chat(
     current_user: User = Depends(get_current_user),
 ):
     found = cancel_request(data.request_id)
-
     logger.info(f"[CHAT CANCEL] req={data.request_id} | found={found}")
-
     return {
-        "status": "cancelled" if found else "not_found",
+        "status":     "cancelled" if found else "not_found",
         "request_id": data.request_id,
     }

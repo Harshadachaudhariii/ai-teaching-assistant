@@ -31,3 +31,9 @@ requests
 Pillow
 qrcode
 reportlab
+
+# -------------------- TESTING --------------------
+pytest
+httpx
+pytest-asyncio
+starlette

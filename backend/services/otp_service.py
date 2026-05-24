@@ -45,30 +45,216 @@ If you did not request this, please ignore this email.
 — NexaAI Team
 """
 
-        # HTML version
+        
+# HTML version
         html = f"""
+<!DOCTYPE html>
 <html>
-<body style="font-family: Arial, sans-serif; background-color: #0a0a0a; color: #f3f4f6; padding: 40px;">
-    <div style="max-width: 480px; margin: auto; background: #111; border: 1px solid #222; border-radius: 16px; padding: 40px;">
-        <h2 style="color: #3b82f6; margin-bottom: 8px;">NexaAI</h2>
-        <p style="color: #9ca3af;">Password Reset Request</p>
-        <hr style="border-color: #222; margin: 24px 0;">
-        <p style="font-size: 16px;">Your verification code is:</p>
-        <div style="background: #1a1a1a; border: 1px solid #3b82f6; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
-            <h1 style="color: #3b82f6; letter-spacing: 8px; margin: 0; font-size: 36px;">{otp}</h1>
-        </div>
-        <p style="color: #9ca3af; font-size: 14px;">
-            This code expires in <strong>{settings.OTP_EXPIRE_MINUTES} minutes</strong>.
-        </p>
-        <p style="color: #9ca3af; font-size: 14px;">
-            If you did not request this, please ignore this email.
-        </p>
-        <hr style="border-color: #222; margin: 24px 0;">
-        <p style="color: #4b5563; font-size: 12px; text-align: center;">— NexaAI Team</p>
-    </div>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexaAI Security Verification</title>
+</head>
+
+<body style="
+    margin:0;
+    padding:0;
+    background-color:#0f1117;
+    font-family:Arial, Helvetica, sans-serif;
+">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td align="center" style="padding:40px 20px;">
+
+<table width="520" cellpadding="0" cellspacing="0" border="0"
+style="
+    background:#171a21;
+    border-radius:18px;
+    padding:40px;
+    border:1px solid #2b2f3a;
+    box-shadow:0 0 20px rgba(0,0,0,0.35);
+">
+
+<tr>
+<td align="center">
+
+<img 
+    src="https://raw.githubusercontent.com/Harshadachaudhariii/ai-teaching-assistant/main/Frontend/assets/logo.png"
+    width="72"
+    height="72"
+    style="
+        border-radius:16px;
+        margin-bottom:20px;
+        object-fit:cover;
+    "
+>
+
+<h1 style="
+    color:white;
+    margin:0;
+    font-size:30px;
+    letter-spacing:0.5px;
+">
+NexaAI
+</h1>
+
+<p style="
+    color:#9ca3af;
+    margin-top:10px;
+    font-size:15px;
+">
+Account Security Verification
+</p>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<p style="
+    color:#d1d5db;
+    margin-top:35px;
+    font-size:15px;
+    line-height:1.8;
+">
+We received a request to reset the password associated with your NexaAI account.
+Use the verification code below to continue securely.
+</p>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<div style="
+    margin-top:10px;
+    background:#0f1117;
+    border:1px solid #2563eb;
+    border-radius:14px;
+    padding:30px;
+    text-align:center;
+">
+
+<p style="
+    color:#9ca3af;
+    margin:0 0 16px 0;
+    font-size:14px;
+">
+Verification Code
+</p>
+
+<div style="
+    color:#3b82f6;
+    font-size:42px;
+    font-weight:bold;
+    letter-spacing:10px;
+">
+{otp}
+</div>
+
+<p style="
+    color:#6b7280;
+    margin-top:18px;
+    font-size:13px;
+">
+This code expires in {settings.OTP_EXPIRE_MINUTES} minutes
+</p>
+
+</div>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<div style="
+    background:#111827;
+    border-left:4px solid #2563eb;
+    padding:18px;
+    margin-top:28px;
+    border-radius:10px;
+">
+
+<p style="
+    margin:0;
+    color:#d1d5db;
+    font-size:14px;
+    line-height:1.7;
+">
+For your security, never share this verification code with anyone.
+NexaAI support will never ask for your password or verification code.
+</p>
+
+</div>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<div style="
+    margin-top:28px;
+    padding:18px;
+    background:#0f172a;
+    border-radius:10px;
+">
+
+<p style="
+    margin:0;
+    color:#9ca3af;
+    font-size:14px;
+    line-height:1.7;
+">
+If you did not initiate this request, you can safely ignore this email.
+No changes will be made to your account unless the verification code is entered.
+</p>
+
+</div>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<hr style="
+    border:none;
+    border-top:1px solid #2b2f3a;
+    margin:35px 0 25px 0;
+">
+
+<p style="
+    color:#6b7280;
+    font-size:13px;
+    text-align:center;
+    line-height:1.8;
+    margin:0;
+">
+This is an automated security message from NexaAI.
+Please do not reply to this email.
+<br><br>
+© 2026 NexaAI Technologies. All rights reserved.
+</p>
+
+</td>
+</tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
 </body>
 </html>
 """
+
+
 
         msg.attach(MIMEText(text, "plain"))
         msg.attach(MIMEText(html, "html"))
@@ -141,11 +327,19 @@ def verify_otp(db: Session, email: str, otp_code: str) -> tuple[bool, str]:
         ).order_by(OTPRecord.created_at.desc()).first()
 
         if not record:
-            logger.warning(f"[OTP SERVICE] OTP not found | email={email}")
             return False, "Invalid OTP"
+
+        if record.attempts >= 3:
+            record.is_used = True
+            db.commit()
+            return False, "Too many attempts. Request new OTP."
 
         # Check expiry
         if datetime.utcnow() > record.expires_at:
+            # Increase attempt count before success check
+            record.attempts += 1
+
+            # Mark as used only on success
             record.is_used = True
             db.commit()
             logger.warning(f"[OTP SERVICE] OTP expired | email={email}")

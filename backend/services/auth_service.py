@@ -41,7 +41,8 @@ def login_user(db: Session, email: str, password: str):
 
     if not verify_password(password, user.password_hash):
         logger.warning(f"[AUTH SERVICE] Incorrect password | email={email}")
-        return None, "Incorrect password"
+    
+        return None, "Incorrect credentials"
 
     # Create JWT token
     token = create_access_token({"user_id": user.id})
@@ -49,13 +50,3 @@ def login_user(db: Session, email: str, password: str):
     logger.info(f"[AUTH SERVICE] Login successful | email={email}")
     return {"access_token": token, "token_type": "bearer", "user_id": user.id}, None
 
-# def get_user_by_email_plain(db: Session, email: str):
-#     logger.info(f"[AUTH SERVICE] Fetching user by email | email={email}")
-    
-#     user = db.query(User).filter(User.email == email).first()
-    
-#     if not user:
-#         logger.warning(f"[AUTH SERVICE] User not found | email={email}")
-#         return None
-    
-#     return user

@@ -14,6 +14,7 @@ class OTPRecord(Base):
     email      = Column(String, nullable=False, index=True)
     otp_code   = Column(String, nullable=False)
     is_used    = Column(Boolean, default=False)
+    attempts = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=False)
 

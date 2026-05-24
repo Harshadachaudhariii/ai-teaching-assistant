@@ -1,8 +1,4 @@
 # api/history.py
-# ============================================================
-# Chat History API — persists chats per user across sessions
-# Routes: /history/...
-# ============================================================
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session

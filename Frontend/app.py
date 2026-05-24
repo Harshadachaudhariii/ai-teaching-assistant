@@ -1,6 +1,4 @@
 # Frontend/app.py
-
-
 import streamlit as st
 from datetime import date
 import sys
@@ -34,7 +32,7 @@ BACKEND_URL = "http://localhost:8000"
 
 
 # ============================================================
-# FIX 4 — Token Validation Helper
+#4 — Token Validation Helper
 # ============================================================
 def _validate_token(token: str) -> dict | None:
     """
@@ -90,7 +88,7 @@ def main():
 
 
     # ============================================================
-    # FIX 4 — AUTO LOGIN REDIRECT
+    #  LOGIN REDIRECT
     # Runs on every page load before rendering anything.
     # If token is present and valid → skip login → go to llm_ui.
     # ============================================================
