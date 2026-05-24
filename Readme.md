@@ -139,7 +139,6 @@ done
 - Add repository secrets in GitHub (Settings → Secrets) if your workflow or deployment needs API keys.
 - I can help pin `requirements.txt`, add linting/coverage to CI, or prepare a Docker deployment manifest for a cloud provider.
 
----
-If you'd like, I can now pin `requirements.txt` from your virtual environment, add linting to CI, or produce a short `CONTRIBUTING.md` to help collaborators get started. Which should I do next?
+
 
 
