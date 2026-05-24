@@ -38,8 +38,8 @@ jobs:
           if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
 
       - name: Run tests
-        run: |
-          pytest -q
+        working-directory: backend
+        run: python -m pytest -q
 
       - name: Upload test results (if any)
         if: always()
