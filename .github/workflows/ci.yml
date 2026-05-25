@@ -10,9 +10,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      SECRET_KEY: "temporary-github-actions-secret-key-for-testing"
-      DATABASE_URL: "sqlite:///./nexa_ai.db"
-      ALGORITHM: "HS256"
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      ALGORITHM: HS256
 
     strategy:
       matrix:

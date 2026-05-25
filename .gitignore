@@ -26,4 +26,8 @@ venv/
 *.log
 
 backend/test.db
-Frontend/modules/billing.py
+
+.pytest_cache/
+**/ .pytest_cache/
+.vh/
+*.log

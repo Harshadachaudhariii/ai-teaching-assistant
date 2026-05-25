@@ -11,7 +11,9 @@ load_dotenv()
 logger = get_logger(__name__)
 
 # -------------------- DATABASE URL --------------------
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./nexa_ai.db")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DEFAULT_DB_PATH = f"sqlite:///{os.path.join(BASE_DIR, 'nexa_ai.db')}"
+DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_DB_PATH)
 
 logger.info(f"Connecting to database: {DATABASE_URL}")
 
