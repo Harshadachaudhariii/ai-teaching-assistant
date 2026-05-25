@@ -29,3 +29,6 @@ backend/logs/
 # OS files
 .DS_Store
 Thumbs.db
+
+# env files 
+.env
