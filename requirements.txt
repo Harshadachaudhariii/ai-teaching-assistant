@@ -18,7 +18,7 @@ python-dotenv
 # -------------------- LLM & AI --------------------
 openai
 requests
-
+slowapi
 # -------------------- RAG & EMBEDDINGS --------------------
 pandas
 numpy

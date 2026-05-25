@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="10.252" timestamp="2026-05-25T12:32:54.293208+05:30" hostname="HARSHADA"><testcase classname="backend.tests.test_root" name="test_root" time="0.024" /></testsuite></testsuites>
