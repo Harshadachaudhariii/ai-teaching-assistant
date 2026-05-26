@@ -66,16 +66,19 @@ python -m pip install -r requirements.txt
 
 ## Step 4. Configure Environment Variables
 Create a .env file in your root workspace. Use the following baseline parameters:
+```bash
 SECRET_KEY=your_super_secret_jwt_signing_key
 OLLAMA_BASE_URL=http://localhost:11434
 DATABASE_URL=sqlite:///./db/nexa_ai.db
 
-# Email SMTP Setup (For Password Reset OTP Validation)
+Email SMTP Setup (For Password Reset OTP Validation)
+
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USERNAME=your_email@gmail.com
 EMAIL_PASSWORD=your_app_password
 EMAIL_FROM=your_email@gmail.com
+```
 
 ## Step 5. Start the Application Stack
 You can launch both server ecosystems simultaneously using the project Makefile hooks:
@@ -89,7 +92,8 @@ Alternatively, step manually into individual workspace packages to initiate runt
 # Manual Backend Initialization
 cd backend
 uvicorn app.main:app --reload --port 8000
-
+```
+```bash
 # Manual Frontend Initialization
 cd Frontend
 streamlit run app.py
