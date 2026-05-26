@@ -1,3 +1,4 @@
+# docker-compose.yml
 version: '3.8'
 
 services:
@@ -7,9 +8,18 @@ services:
       dockerfile: docker/Dockerfile.backend
     ports:
       - "8000:8000"
-    env_file:
-      - .env
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-sqlite:////app/backend/nexa_ai.db}
+      - SECRET_KEY=${SECRET_KEY:-change-me}
+
+    depends_on:
+      - ollama
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   frontend:
     build:
@@ -17,13 +27,24 @@ services:
       dockerfile: docker/Dockerfile.frontend
     ports:
       - "8501:8501"
-    env_file:
-      - .env
+    environment:
+      - API_URL=${API_URL:-http://backend:8000}
+    depends_on:
+      - backend
     restart: unless-stopped
 
   ollama:
     image: ghcr.io/ollama/ollama:latest
     ports:
       - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
     restart: unless-stopped
+
+volumes:
+  ollama_data:
     # Note: Ollama may require special setup; replace this service with your local Ollama deployment if needed.
+  
+# Notes:
+# - This compose file avoids an explicit `env_file:` entry so missing .env won't cause compose to fail.
+# - Compose will still load a project-level `.env` (if present) for variable substitution.

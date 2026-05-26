@@ -46,7 +46,7 @@ async def lifespan(app: FastAPI):
     
 # ── App ───────────────────────────────────────────────────────
 app = FastAPI(
-    title="AI Teaching Assistant",
+    title="NexaAI Teaching Assistant Backend",
     description="EchoAI + AtlasAI Backend",
     version="1.0.0",
     lifespan=lifespan  # Registered the lifespan handler here

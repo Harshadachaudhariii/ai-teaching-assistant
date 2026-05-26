@@ -2,14 +2,15 @@
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from utils.logger import get_logger
-
+import os 
 logger = get_logger(__name__)
-
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DEFAULT_DB_PATH = f"sqlite:///{os.path.join(BASE_DIR, 'db', 'nexa_ai.db')}"
 # -------------------- SETTINGS --------------------
 class Settings(BaseSettings):
 
     # Database
-    DATABASE_URL: str = "sqlite:///./nexa_ai.db"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", DEFAULT_DB_PATH)
 
     # JWT
     SECRET_KEY: str
