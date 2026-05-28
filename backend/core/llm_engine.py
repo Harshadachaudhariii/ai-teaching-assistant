@@ -9,6 +9,7 @@ import requests as http_requests
 from typing import Generator, Optional
 from core.config import settings
 from utils.logger import get_logger
+import re
 
 logger = get_logger(__name__)
 
@@ -238,44 +239,43 @@ Video Title: CSS Box Model - Margin, Padding & Borders
 Video Number: 18
 Timestamp: 07:06
 
-IMPORTANT:
-- Keep "Video Title", "Video Number", and "Timestamp" on separate lines.
-- Never output JSON.
-- Never output XML.
-- Never add markdown formatting.
-- Never repeat the question.
-- Keep the response clean and readable.
+
+You are AtlasAI, an AI teaching assistant specialized in searching video transcripts.
+Analyze the provided course context chunks and determine which chunk contains the answer to the user's question.
+
+STRICT RULES:
+1. Output ONLY the index number of the matching chunk (e.g., 0, 1, 2, etc.).
+2. If the answer is not found in any of the chunks, output exactly: -1
+3. Do NOT include any introductory or concluding text, punctuation, or markdown.
 """
 
 def build_atlas_prompt(context_df, query: str) -> tuple[str, dict]:
     context_lines = []
-    for _, row in context_df.iterrows():
+    
+    # We create clean layout maps for the LLM to inspect
+    for idx, row in context_df.iterrows():
         context_lines.append(
-            f"""
-        Video Number: {row['number']}
-        Video Title: {row['title']}
-        Timestamp: {row['timestamp']}
-
-        Transcript:
-        {str(row["text"])[:1200]}
-        """
+            f"--- CHUNK INDEX: {idx} ---\n"
+            f"Transcript Content:\n{str(row['text'])[:1200]}"
         )
 
-    context_block = "\n\n---\n\n".join(context_lines)
+    context_block = "\n\n".join(context_lines)
 
     prompt = (
-        f"CONTEXT:\n{context_block}\n\n"
-        f"QUESTION: {query}"
+        f"CONTEXT CHUNKS:\n{context_block}\n\n"
+        f"QUESTION: {query}\n\n"
+        f"Output the single matching chunk index or -1:"
     )
 
+    # Cache iloc[0] metadata as a reliable fallback in case parsing fails
     best = context_df.iloc[0]
-    best_meta = {
-        "title":     str(best["title"]),
-        "number":    str(best["number"]),
-        "timestamp": str(best["timestamp"]),
+    fallback_meta = {
+        "title":     str(best.get("title", "Unknown Title")),
+        "number":    str(best.get("number", "N/A")),
+        "timestamp": str(best.get("timestamp", "00:00")),
     }
 
-    return prompt, best_meta
+    return prompt, fallback_meta
 
 def generate_atlas_stream(
     context_df,
@@ -287,24 +287,54 @@ def generate_atlas_stream(
         request_id = "atlas-" + str(uuid.uuid4())
 
     try:
-        _, best_meta = build_atlas_prompt(context_df, query)
-          
-        logger.info(f"[ATLASAI] Stream start | req={request_id}")
+        prompt, fallback_meta = build_atlas_prompt(context_df, query)
+        logger.info(f"[ATLASAI] Processing request | req={request_id}")
 
-        title     = best_meta["title"]
-        number    = best_meta["number"]
-        timestamp = best_meta["timestamp"]
+        # Get prediction index decision from Ollama
+        response = client.chat.completions.create(
+            model=ATLAS_MODEL,
+            messages=[
+                {"role": "system", "content": ATLAS_SYSTEM_PROMPT},
+                {"role": "user", "content": prompt}
+            ],
+            stream=False,
+            temperature=0.0
+        )
 
+        raw_decision = response.choices[0].message.content.strip()
+        logger.info(f"[ATLASAI] Raw LLM output: '{raw_decision}' | req={request_id}")
+
+        # --- RESILIENT PARSING LAYER ---
+        # Look for the first integer sequence in the model's text response
+        match = re.search(r'-?\d+', raw_decision)
+        
+        if match:
+            chosen_index = int(match.group())
+        else:
+            chosen_index = -2  # Force to fallback track if no integer found
+
+        logger.info(f"[ATLASAI] Parsed Index Match: {chosen_index} | req={request_id}")
+
+        # Check if index exists inside the dataframe tracking frame
+        if 0 <= chosen_index < len(context_df):
+            row = context_df.iloc[chosen_index]
+            title = str(row.get("title", fallback_meta["title"]))
+            number = str(row.get("number", fallback_meta["number"]))
+            timestamp = str(row.get("timestamp", fallback_meta["timestamp"]))
+        else:
+            # SAFETY FALLBACK: Instead of displaying 'Not found', revert back to the highest score row
+            logger.warning(f"[ATLASAI] Index validation missed. Using best chunk row fallback.")
+            title = fallback_meta["title"]
+            number = fallback_meta["number"]
+            timestamp = fallback_meta["timestamp"]
+
+        # Stream directly out to the frontend client app UI layout format lines
         yield f"data: Video Title: {title}\n\n"
         yield f"data: Video Number: {number}\n\n"
         yield f"data: Timestamp: {timestamp}\n\n"
-
-        logger.info(f"[ATLASAI] Complete | req={request_id}")
-
-    except GeneratorExit:
-        logger.info(f"[ATLASAI] GeneratorExit | req={request_id}")
+        yield "data: [DONE]\n\n"
 
     except Exception as e:
-        logger.error(f"[ATLASAI] Error: {e} | req={request_id}")
-        yield f"data: Error: {str(e)}\n\n"
+        logger.error(f"[ATLASAI] Stream error: {e} | req={request_id}")
+        yield f"data: [Error: {str(e)}]\n\n"
         yield "data: [DONE]\n\n"

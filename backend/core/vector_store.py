@@ -246,7 +246,7 @@ def search_similar_chunks(query: str, top_k: int = TOP_K):
 
         # 6. Build result dataframe
         result_df = embeddings_df.loc[final_indices].copy()
-
+        result_df = result_df.reset_index(drop=True)
         # attach scores
         result_df["score"] = [
             float(similarities[i]) for i in final_indices

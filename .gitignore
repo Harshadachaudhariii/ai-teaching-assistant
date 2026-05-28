@@ -31,3 +31,5 @@ backend/test.db
 **/ .pytest_cache/
 .vh/
 *.log
+
+llm/

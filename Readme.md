@@ -71,7 +71,7 @@ SECRET_KEY=your_super_secret_jwt_signing_key
 OLLAMA_BASE_URL=http://localhost:11434
 DATABASE_URL=sqlite:///./db/nexa_ai.db
 
-Email SMTP Setup (For Password Reset OTP Validation)
+# Email SMTP Setup (For Password Reset OTP Validation)
 
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
