@@ -30,7 +30,7 @@ streamlit
 requests
 Pillow
 qrcode
-reportlab
+
 
 # -------------------- TESTING --------------------
 pytest

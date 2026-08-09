@@ -70,6 +70,14 @@ app.include_router(user_router,    prefix="/user",    tags=["User"])
 app.include_router(chat_router,    prefix="/chat",    tags=["EchoAI"])
 app.include_router(rag_router,     prefix="/rag",     tags=["AtlasAI"])
 app.include_router(history_router, prefix="/history", tags=["History"])
+
+# ── Health Check Endpoint for Docker ──────────────────────────
+@app.get("/health", tags=["System"])
+def health_check():
+    """
+    Docker healthcheck endpoint to confirm the container is running smoothly.
+    """
+    return {"status": "ok"}
 logger.info("[MAIN] All routers registered")
 
 # 1. Define the Lifespan (This replaces @app.on_event)
